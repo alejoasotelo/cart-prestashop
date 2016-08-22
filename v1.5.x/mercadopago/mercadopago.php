@@ -947,8 +947,8 @@ class MercadoPago extends PaymentModule
         $shipping_cost = (double) $cart->getOrderTotal(true, Cart::ONLY_SHIPPING);
         if ($shipping_cost > 0) {
             $item = array(
-                'title' => 'Shipping',
-                'description' => 'Shipping service used by store',
+                'title' => $this->l('Shipping'),
+                'description' => $this->l('Shipping service used by store'),
                 'quantity' => 1,
                 'category_id' => Configuration::get('MERCADOPAGO_CATEGORY'),
                 'unit_price' => $shipping_cost
@@ -961,8 +961,8 @@ class MercadoPago extends PaymentModule
         $wrapping_cost = (double) $cart->getOrderTotal(true, Cart::ONLY_WRAPPING);
         if ($wrapping_cost > 0) {
             $item = array(
-                'title' => 'Wrapping',
-                'description' => 'Wrapping service used by store',
+                'title' => $this->l('Wrapping'),
+                'description' => $this->l('Wrapping service used by store'),
                 'quantity' => 1,
                 'category_id' => Configuration::get('MERCADOPAGO_CATEGORY'),
                 'unit_price' => $wrapping_cost
@@ -975,8 +975,8 @@ class MercadoPago extends PaymentModule
         $discounts = (double) $cart->getOrderTotal(true, Cart::ONLY_DISCOUNTS);
         if ($discounts > 0) {
             $item = array(
-                'title' => 'Discount',
-                'description' => 'Discount provided by store',
+                'title' => $this->l('Discount'),
+                'description' => $this->l('Discount provided by store'),
                 'quantity' => 1,
                 'category_id' => Configuration::get('MERCADOPAGO_CATEGORY'),
                 'unit_price' => - $discounts
