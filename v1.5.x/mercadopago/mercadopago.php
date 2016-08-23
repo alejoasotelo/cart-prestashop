@@ -1169,6 +1169,9 @@ class MercadoPago extends PaymentModule
         $products = $cart->getProducts();
         $items = array();
         $summary = '';
+        $tmp_fix_price = 0;
+        $tmp_fix_title = array();
+        $tmp_fix_image_url = '';
         foreach ($products as $key => $product) {
             $image_url = '';
             // get image URL
@@ -1190,6 +1193,12 @@ class MercadoPago extends PaymentModule
                 $summary .= ', ' . $product['name'];
             }
             $items[] = $item;
+
+            $tmp_fix_title[] = $product['quantity'].'x '.ucwords(strtolower($product['name']));
+            $tmp_fix_price += $product['price_wt'];
+
+            if ($tmp_fix_image_url == '')
+                $tmp_fix_image_url = $image_url;
         }
         // include shipping cost
         $shipping_cost = (double) $cart->getOrderTotal(true, Cart::ONLY_SHIPPING);
@@ -1202,6 +1211,8 @@ class MercadoPago extends PaymentModule
                 'category_id' => Configuration::get('MERCADOPAGO_CATEGORY')
             );
             $items[] = $item;
+            $tmp_fix_title[] = $item['title'];
+            $tmp_fix_price += $shipping_cost;
         }
         // include wrapping cost
         $wrapping_cost = (double) $cart->getOrderTotal(true, Cart::ONLY_WRAPPING);
@@ -1215,6 +1226,8 @@ class MercadoPago extends PaymentModule
                 'currency_id' => $cart->id_currency
             );
             $items[] = $item;
+            $tmp_fix_title[] = $item['title'];
+            $tmp_fix_price += $wrapping_cost;
         }
         // include discounts
         $discounts = (double) $cart->getOrderTotal(true, Cart::ONLY_DISCOUNTS);
@@ -1227,6 +1240,8 @@ class MercadoPago extends PaymentModule
                 'category_id' => Configuration::get('MERCADOPAGO_CATEGORY')
             );
             $items[] = $item;
+            $tmp_fix_title[] = $item['title'];
+            $tmp_fix_price += - $discounts;
         }
         $data = array(
             'external_reference' => $cart->id,
@@ -1297,6 +1312,21 @@ class MercadoPago extends PaymentModule
         $data['customer']['surname'] = $data['customer']['last_name'];
         $data['payer'] = $data['customer'];
         unset($data['customer']);
+
+        $tmp_item_title = implode(' + ', $tmp_fix_title);
+        $items = array(
+            array (
+            "id" => $cart->id,
+            "title" => $tmp_item_title,
+            "description" => $tmp_item_title,
+            "quantity" => 1,
+            "unit_price" => $tmp_fix_price,
+            "picture_url"=> $tmp_fix_image_url,
+            "category_id"=> Configuration::get('mercadopago_CATEGORY')
+            )
+        );
+
+        $data['items'] = $items;
 
         return $data;
     }
