@@ -1419,6 +1419,10 @@ class MercadoPago extends PaymentModule
                 }
             }
 
+            if (Configuration::get('MERCADOPAGO_LOG') == 'true') {
+                UtilMercadoPago::logMensagem('MercadoPago :: listenIPN - external_reference = ' . $external_reference, MP_SDK::INFO);
+            }
+
             if ($merchant_order_info['total_amount'] == $transaction_amounts) {
                 $this->updateOrder($result,
                     $payment_ids,
