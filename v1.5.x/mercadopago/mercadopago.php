@@ -678,7 +678,7 @@ class MercadoPago extends PaymentModule
 
     public function hookDisplayHeader()
     {
-        if (! $this->active && $this->context->smarty->tpl_vars['page_name']->value != 'order') {
+        if (!$this->active || $this->context->smarty->tpl_vars['page_name']->value != 'order') {
             return;
         }
 
