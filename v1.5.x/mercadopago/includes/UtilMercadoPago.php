@@ -32,7 +32,7 @@ class UtilMercadoPago
         $data_hora = date("F j, Y, g:i a");
         if ($version >= 6) {
             PrestaShopLogger::addLog(
-                $data_hora."===".$mensagem,
+                $mensagem,
                 $nivel,
                 0,
                 null,
@@ -41,7 +41,7 @@ class UtilMercadoPago
             );
         } else if ($version == 5) {
             Logger::addLog(
-                $data_hora."===".$mensagem,
+                $mensagem,
                 $nivel,
                 null,
                 null,
