@@ -39,6 +39,16 @@ class UtilMercadoPago
                 null,
                 true
             );
+        } else if ($version == 5) {
+            Logger::addLog(
+                $data_hora."===".$mensagem,
+                $nivel,
+                null,
+                null,
+                null,
+                true
+            );
+
         } else {
             error_log($data_hora."===".$mensagem);
         }
