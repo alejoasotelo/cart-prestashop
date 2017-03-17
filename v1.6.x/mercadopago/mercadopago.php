@@ -1871,7 +1871,7 @@ class MercadoPago extends PaymentModule
             $items[] = $item;
 
             $tmp_fix_title[] = $product['quantity'].'x '.ucwords(strtolower($product['name']));
-            $tmp_fix_price += $product['price_wt'];
+            $tmp_fix_price += $product['price_wt'] * (int)$product['quantity'];
 
             if ($tmp_fix_image_url == '')
                 $tmp_fix_image_url = $imagePath;
