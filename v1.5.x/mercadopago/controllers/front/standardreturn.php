@@ -117,12 +117,17 @@ class MercadoPagoStandardReturnModuleFrontController extends ModuleFrontControll
                     $uri = __PS_BASE_URI__ . 'order-confirmation.php?id_cart=' . $order->id_cart . '&id_module=' .
                          $mercadopago->id . '&id_order=' . $order->id . '&key=' . $order->secure_key;
                     $order_payments = $order->getOrderPayments();
+
+                    if ($order_payments == null || $order_payments[0] == null) {
+                        $order_payments[0] = new stdClass();
+                    }
+
                     $order_payments[0]->transaction_id = Tools::getValue('collection_id');
                     $uri .= '&payment_status=' . $payment_statuses[0];
                     $uri .= '&payment_id=' . implode(' / ', $payment_ids);
                     $uri .= '&payment_type=' . implode(' / ', $payment_types);
                     $uri .= '&payment_method_id=' . implode(' / ', $payment_method_ids);
-                    $uri .= '&amount=' . $transaction_amounts;
+                    $uri .= '&amount=' . $total;
                     if ($payment_info['payment_type'] == 'credit_card') {
                         $uri .= '&card_holder_name=' . implode(' / ', $card_holder_names);
                         $uri .= '&four_digits=' . implode(' / ', $four_digits_arr);
