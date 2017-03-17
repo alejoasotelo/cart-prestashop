@@ -32,6 +32,10 @@ class MercadoPagoStandardReturnModuleFrontController extends ModuleFrontControll
     {
         parent::initContent();
         if (Tools::getIsset('collection_id') && Tools::getValue('collection_id') != 'null') {
+
+            if (Configuration::get('MERCADOPAGO_LOG') == 'true') {
+                UtilMercadoPago::logMensagem('MercadoPagoStandardReturn::initContent()::collection_id = ' . Tools::getValue('collection_id'), MPApi::INFO);
+            }
             // payment variables
             $payment_statuses = array();
             $payment_ids = array();
@@ -162,7 +166,7 @@ class MercadoPagoStandardReturnModuleFrontController extends ModuleFrontControll
             }
         } else {
             UtilMercadoPago::logMensagem(
-                'MercadoPagoStandardReturnModuleFrontController::initContent = '.
+                'MercadoPagoStandardReturn::initContent = '.
                 'External reference is not set. Order placement has failed.',
                 MPApi::ERROR
             );

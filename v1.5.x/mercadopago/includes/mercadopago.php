@@ -389,9 +389,9 @@ class MPRestCli
         );
 
         if (Configuration::get('MERCADOPAGO_LOG') == 'true') {
-            UtilMercadoPago::logMensagem('MercadoPago.exec :: method = ' . $method . ', uri: ' . $uri, MP_SDK::INFO);
-            UtilMercadoPago::logMensagem('MercadoPago.exec :: data = ' . Tools::jsonEncode($data), MP_SDK::INFO);
-            UtilMercadoPago::logMensagem('MercadoPago.exec :: response = ' . $api_result, MP_SDK::INFO);
+            UtilMercadoPago::logMensagem('MPRestCli::exec(' . $method . ', ' . $uri . ')', MP_SDK::INFO);
+            UtilMercadoPago::logMensagem('MPRestCli::exec()::$data = ' . Tools::jsonEncode($data), MP_SDK::INFO);
+            UtilMercadoPago::logMensagem('MPRestCli::exec() -> response = ' . $api_result, MP_SDK::INFO);
         }
 
         if ($response['status'] == 0) {
@@ -399,7 +399,7 @@ class MPRestCli
             throw new Exception($error);
         } else {
             if ($response['status'] > 202) {
-                UtilMercadoPago::logMensagem("MercadoPago::exec = " . $response['response']['message'], MP_SDK::ERROR);
+                UtilMercadoPago::logMensagem("MPRestCli::exec = " . $response['response']['message'], MP_SDK::ERROR);
             }
         }
         curl_close($connect);
