@@ -42,9 +42,9 @@ class MercadoPagoNotificationModuleFrontController extends ModuleFrontController
              UtilMercadoPago::logMensagem('Debug Mode :: displayAjax - id = ' . Tools::getValue('id'), MP_SDK::INFO);
              UtilMercadoPago::logMensagem('Debug Mode :: displayAjax - checkout = ' . Tools::getValue('checkout'), MP_SDK::INFO);
         }
-        
+
         if (Tools::getValue('checkout') && Tools::getValue('data_id') || Tools::getValue('id')) {
-            $mercadopago = new MercadoPago();
+            $mercadopago = $this->module;
             if (Tools::getValue('checkout') == "custom") {
                 $mercadopago->listenIPN(
                     Tools::getValue('checkout'),
