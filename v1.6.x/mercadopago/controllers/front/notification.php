@@ -37,14 +37,23 @@ class MercadoPagoNotificationModuleFrontController extends ModuleFrontController
     }
 
     public function displayAjax()
-    {               
-        
+    {
+
         if (Configuration::get('MERCADOPAGO_LOG') == 'true') {
-             UtilMercadoPago::logMensagem('Debug Mode :: displayAjax - topic = ' . Tools::getValue('topic'), MPApi::INFO);
-             UtilMercadoPago::logMensagem('Debug Mode :: displayAjax - id = ' . Tools::getValue('id'), MPApi::INFO);
-             UtilMercadoPago::logMensagem('Debug Mode :: displayAjax - checkout = ' . Tools::getValue('checkout'), MPApi::INFO);
+            UtilMercadoPago::logMensagem(
+                'Debug Mode :: displayAjax - topic = ' . Tools::getValue('topic'),
+                MPApi::INFO
+            );
+            UtilMercadoPago::logMensagem(
+                'Debug Mode :: displayAjax - id = ' . Tools::getValue('id'),
+                MPApi::INFO
+            );
+            UtilMercadoPago::logMensagem(
+                'Debug Mode :: displayAjax - checkout = ' . Tools::getValue('checkout'),
+                MPApi::INFO
+            );
         }
-        
+
         if (Tools::getValue('checkout') && Tools::getValue('data_id') || Tools::getValue('id')) {
             $mercadopago = $this->module;
             if (Tools::getValue('checkout') == "custom") {
@@ -54,7 +63,11 @@ class MercadoPagoNotificationModuleFrontController extends ModuleFrontController
                     Tools::getValue('data_id')
                 );
             } else {
-                $mercadopago->listenIPN(Tools::getValue('checkout'), Tools::getValue('topic'), Tools::getValue('id'));
+                $mercadopago->listenIPN(
+                    Tools::getValue('checkout'),
+                    Tools::getValue('topic'),
+                    Tools::getValue('id')
+                );
             }
         }
     }
