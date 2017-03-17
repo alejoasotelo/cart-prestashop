@@ -30,6 +30,7 @@ if (!defined('_PS_VERSION_')) {
 
 function_exists('curl_init');
 include dirname(__FILE__).'/includes/MPApi.php';
+include_once dirname(__FILE__).'/includes/UtilMercadoPago.php';
 
 class MercadoPago extends PaymentModule
 {
@@ -729,6 +730,22 @@ class MercadoPago extends PaymentModule
             }
         } elseif (Tools::getValue('submitmercadopago')) {
 
+            // Limpio la cache APC.
+            if (extension_loaded('apc')) {
+                apc_clear_cache('user');
+                apc_clear_cache();
+            }
+
+            if (extension_loaded('apcu')) {
+                    apc_clear_cache('user');
+            }
+
+            if (function_exists('opcache_reset')) {
+                // Clear it twice to avoid some internal issues...
+                opcache_reset();
+                opcache_reset();
+            }
+
             error_log("====ENTROU AQUI 1=====");
 
             $client_id = Tools::getValue('MERCADOPAGO_CLIENT_ID');
@@ -831,11 +848,8 @@ class MercadoPago extends PaymentModule
 
                 }
             } catch (Exception $e) {
-                PrestaShopLogger::addLog(
-                    'MercadoPago::getContent - Fatal Error: '.$e->getMessage(),
-                    MPApi::FATAL_ERROR,
-                    0
-                );
+                UtilMercadoPago::logMensagem('MercadoPago::getContent - Fatal Error: '.$e->getMessage(),
+                    MPApi::FATAL_ERROR);
                 $this->context->smarty->assign(
                     array(
                         'message_error' => $e->getMessage(),
@@ -1352,11 +1366,10 @@ class MercadoPago extends PaymentModule
                     Tools::redirect($data['preferences_url']);
                 } else {
                     $data['preferences_url'] = null;
-                    PrestaShopLogger::addLog(
+                    UtilMercadoPago::logMensagem(
                         'MercadoPago::hookPayment - An error occurred during preferences creation.'.
                         'Please check your credentials and try again.: ',
-                        MPApi::ERROR,
-                        0
+                        MPApi::ERROR
                     );
                 }
             }
@@ -1757,7 +1770,7 @@ class MercadoPago extends PaymentModule
                 $payment_preference['coupon_amount'] = (float) $coupon['response']['coupon_amount'];
                 $payment_preference['coupon_code'] = Tools::strtoupper($mercadopago_coupon);
             } else {
-                PrestaShopLogger::addLog($coupon['response']['error'].Tools::jsonEncode($coupon), MPApi::ERROR, 0);
+                UtilMercadoPago::logMensagem($coupon['response']['error'].Tools::jsonEncode($coupon), MPApi::ERROR);
                 $this->context->smarty->assign(
                     array(
                         'message_error' => $coupon['response']['error'],
@@ -2157,9 +2170,9 @@ class MercadoPago extends PaymentModule
 
 
         if (Configuration::get('MERCADOPAGO_LOG') == 'true') {
-            PrestaShopLogger::addLog('MercadoPago :: listenIPN - topic = '.$topic, MPApi::INFO, 0);
-            PrestaShopLogger::addLog('MercadoPago :: listenIPN - id = '.$id, MPApi::INFO, 0);
-            PrestaShopLogger::addLog('MercadoPago :: listenIPN - checkout = '.$checkout, MPApi::INFO, 0);
+            UtilMercadoPago::logMensagem('MercadoPago::listenIPN()::$topic = '.$topic, MPApi::INFO);
+            UtilMercadoPago::logMensagem('MercadoPago::listenIPN()::$id = '.$id, MPApi::INFO);
+            UtilMercadoPago::logMensagem('MercadoPago::listenIPN()::$checkout = '.$checkout, MPApi::INFO);
         }
 
         if ($checkout == 'standard' && $topic == 'merchant_order' && $id > 0) {
