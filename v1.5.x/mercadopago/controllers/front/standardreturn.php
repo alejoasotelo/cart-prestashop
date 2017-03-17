@@ -32,7 +32,7 @@ class MercadoPagoStandardReturnModuleFrontController extends ModuleFrontControll
     public function initContent()
     {
         parent::initContent();
-        
+
         if (Tools::getIsset('collection_id') && Tools::getValue('collection_id') != 'null') {
             // payment variables
             $payment_statuses = array();
@@ -45,27 +45,27 @@ class MercadoPagoStandardReturnModuleFrontController extends ModuleFrontControll
             $status_details = array();
             $transaction_amounts = 0;
             $collection_ids = explode(',', Tools::getValue('collection_id'));
-            
+
             $mercadopago = $this->module;
             $mercadopago_sdk = $mercadopago->mercadopago;
-            
+
             foreach ($collection_ids as $collection_id) {
                 $result = $mercadopago_sdk->getPaymentStandard($collection_id);
-                
+
                 $payment_info = $result['response']['collection'];
                 $id_cart = $payment_info['external_reference'];
                 $cart = new Cart($id_cart);
-                
+
                 $payment_statuses[] = $payment_info['status'];
                 $payment_ids[] = $payment_info['id'];
                 $payment_types[] = $payment_info['payment_type'];
-                
+
                 if (isset($payment_info['payment_method_id'])) {
                     $payment_method_ids[] = $payment_info['payment_method_id'];
                 }
-                
+
                 $transaction_amounts += $payment_info['transaction_amount'];
-                
+
                 if (isset($payment_info['payment_type']) && $payment_info['payment_type'] == 'credit_card') {
                     $card_holder_names[] = isset($payment_info['card']['cardholder']['name']) ? $payment_info['card']['cardholder']['name'] : '';
                     if (isset($payment_info['card']['last_four_digits'])) {
@@ -77,7 +77,7 @@ class MercadoPagoStandardReturnModuleFrontController extends ModuleFrontControll
             }
             if (Validate::isLoadedObject($cart)) {
                 $total = (double) number_format($transaction_amounts, 2, '.', '');
-                
+
                 $extra_vars = array(
                     '{bankwire_owner}' => $mercadopago->textshowemail,
                     '{bankwire_details}' => '',
@@ -109,11 +109,11 @@ class MercadoPagoStandardReturnModuleFrontController extends ModuleFrontControll
                             $cart->id_currency,
                             false,
                             $cart->secure_key
-                       );
+                        );
                     }
                     $order_id = ! $order_id ? Order::getOrderByCartId($cart->id) : $order_id;
                     $order = new Order($order_id);
-                    
+
                     $uri = __PS_BASE_URI__ . 'order-confirmation.php?id_cart=' . $order->id_cart . '&id_module=' .
                          $mercadopago->id . '&id_order=' . $order->id . '&key=' . $order->secure_key;
                     $order_payments = $order->getOrderPayments();
