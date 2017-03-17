@@ -17,7 +17,7 @@
 * versions in the future. If you wish to customize PrestaShop for your
 * needs please refer to http://www.prestashop.com for more information.
 *
-*  @author    ricardobrito
+*  @author    MercadoPago
 *  @copyright Copyright (c) MercadoPago [http://www.mercadopago.com]
 *  @license   http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
 *  International Registered Trademark & Property of MercadoPago
@@ -38,7 +38,7 @@
 					{l s='Card holder name: ' mod='mercadopago'}
 					{$card_holder_name|escape:'htmlall':'UTF-8'}</br>
 				{/if}
-				
+
 				{if $four_digits != null}
 					{l s='Credit card: ' mod='mercadopago'}
 					{$four_digits|escape:'htmlall':'UTF-8'}</br>
@@ -72,3 +72,11 @@
 		<span class="footer-logo"></span>
 	</div>
 </div>
+
+<script type="text/javascript">
+  ModuleAnalytics.setPublicKey("TEST-a603f517-310f-4956-a00d-93519fc17647")
+  ModuleAnalytics.setPaymentId("123456")
+  ModuleAnalytics.setPaymentType("credit_card")
+  ModuleAnalytics.setCheckoutType("basic")
+  ModuleAnalytics.put()
+</script>

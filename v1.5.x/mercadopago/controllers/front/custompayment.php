@@ -18,17 +18,15 @@
  * versions in the future. If you wish to customize PrestaShop for your
  * needs please refer to http://www.prestashop.com for more information.
  *
- *  @author    ricardobrito
+ *  @author    MercadoPago
  *  @copyright Copyright (c) MercadoPago [http://www.mercadopago.com]
  *  @license   http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  *  International Registered Trademark & Property of MercadoPago
  */
 
-include_once dirname(__FILE__) . '/../../mercadopago.php';
-
+include_once dirname(__FILE__).'/../../mercadopago.php';
 class MercadoPagoCustomPaymentModuleFrontController extends ModuleFrontController
 {
-
     public function initContent()
     {
         $this->display_column_left = false;
@@ -40,7 +38,11 @@ class MercadoPagoCustomPaymentModuleFrontController extends ModuleFrontControlle
     {
         // card_token_id
         $mercadopago = $this->module;
+
         $response = $mercadopago->execPayment($_POST);
+
+        error_log("====retorno pagamento=====".Tools::jsonEncode($response));
+
         $order_status = null;
         if (array_key_exists('status', $response)) {
             switch ($response['status']) {
@@ -55,86 +57,109 @@ class MercadoPagoCustomPaymentModuleFrontController extends ModuleFrontControlle
                     break;
             }
         }
-        
+
         if ($order_status != null) {
             $cart = Context::getContext()->cart;
-            
+
             $total = (double) number_format($response['transaction_amount'], 2, '.', '');
             $extra_vars = array(
                 '{bankwire_owner}' => $mercadopago->textshowemail,
                 '{bankwire_details}' => '',
-                '{bankwire_address}' => ''
+                '{bankwire_address}' => '',
             );
-            error_log("====CUSTOM PAYMENT====".$response['id']);
 
             $id_order = Order::getOrderByCartId($cart->id);
+
             $order = new Order($id_order);
             $existStates = $mercadopago->checkStateExist($id_order, Configuration::get($order_status));
-            error_log("=======existStates placeOrder===========".$existStates);
             if ($existStates) {
                 return;
+            }
+            $payment_type_id = $response['payment_type_id'];
+            $displayName = UtilMercadoPago::setNamePaymentType($payment_type_id);
+
+            $payment_mode = 'boleto';
+            $installments = 1;
+            if (Tools::getIsset('card_token_id')) {
+                $payment_mode = 'cartao';
+                $installments = (int)$response['installments'];
+            }
+
+            $percent = (float) Configuration::get('MERCADOPAGO_DISCOUNT_PERCENT');
+            $id_cart_rule = null;
+            if ($percent > 0) {
+                error_log("Entrou aqui percent====".$percent);
+
+                $id_cart_rule = $mercadopago->applyDiscount($cart, $payment_mode, $installments);
             }
 
             $mercadopago->validateOrder(
                 $cart->id,
                 Configuration::get($order_status),
                 $total,
-                $mercadopago->displayName,
+                $displayName,
                 null,
                 $extra_vars,
                 $cart->id_currency,
                 false,
                 $cart->secure_key
             );
+
+            if ($id_cart_rule != null) {
+                $cartRule = new CartRule($id_cart_rule);
+                $cartRule->active = false;
+                $cartRule->save();
+            }
+
             $order = new Order($mercadopago->currentOrder);
             $order_payments = $order->getOrderPayments();
             $order_payments[0]->transaction_id = $response['id'];
-            
-            $uri = __PS_BASE_URI__ . 'order-confirmation.php?id_cart=' . $cart->id . '&id_module=' . $mercadopago->id .
-                 '&id_order=' . $mercadopago->currentOrder . '&key=' . $order->secure_key . '&payment_id=' .
-                 $response['id'] . '&payment_status=' . $response['status'];
-            
+
+            $uri = __PS_BASE_URI__.'order-confirmation.php?id_cart='.$cart->id.'&id_module='.$mercadopago->id.
+                 '&id_order='.$mercadopago->currentOrder.'&key='.$order->secure_key.'&payment_id='.
+                 $response['id'].'&payment_status='.$response['status'];
+
             if (Tools::getIsset('card_token_id')) {
                 // get credit card last 4 digits
-                $four_digits = '**** **** **** ' . $response["card"]["last_four_digits"];
-                
-                $cardholderName = $response["card"]["cardholder"]["name"];
-                
+                $four_digits = '**** **** **** '.$response['card']['last_four_digits'];
+
+                $cardholderName = $response['card']['cardholder']['name'];
+
                 $order_payments[0]->card_number = $four_digits;
                 $order_payments[0]->card_brand = Tools::ucfirst($response['payment_method_id']);
                 $order_payments[0]->card_holder = $cardholderName;
-                
-                $uri .= '&card_token=' . Tools::getValue('card_token_id') . '&card_holder_name=' . $cardholderName .
-                     '&four_digits=' . $four_digits . '&payment_method_id=' . $response['payment_method_id'] .
-                     '&payment_type=' . $response['payment_type_id'] . '&installments=' . $response['installments'] .
-                     '&statement_descriptor=' . $response['statement_descriptor'] . '&status_detail=' .
-                     $response['status_detail'] . '&amount=' . $response['transaction_details']['total_paid_amount'];
+
+                $uri .= '&card_token='.Tools::getValue('card_token_id').'&card_holder_name='.$cardholderName.
+                     '&four_digits='.$four_digits.'&payment_method_id='.$response['payment_method_id'].
+                     '&payment_type='.$response['payment_type_id'].'&installments='.$response['installments'].
+                     '&statement_descriptor='.$response['statement_descriptor'].'&status_detail='.
+                     $response['status_detail'].'&amount='.$response['transaction_details']['total_paid_amount'];
             } else {
-                $uri .= '&payment_method_id=' . $response['payment_method_id'] . '&payment_type=' .
-                     $response['payment_type_id'] . '&boleto_url=' .
+                $uri .= '&payment_method_id='.$response['payment_method_id'].'&payment_type='.
+                     $response['payment_type_id'].'&boleto_url='.
                      urlencode($response['transaction_details']['external_resource_url']);
             }
             $order_payments[0]->save();
             Tools::redirectLink($uri);
         } else {
             $this->context->controller->addCss(
-                (Configuration::get('PS_SSL_ENABLED') ? 'https://' : 'http://') .
-                htmlspecialchars($_SERVER['HTTP_HOST'], ENT_COMPAT, 'UTF-8') . __PS_BASE_URI__ .
+                (Configuration::get('PS_SSL_ENABLED') ? 'https://' : 'http://').
+                htmlspecialchars($_SERVER['HTTP_HOST'], ENT_COMPAT, 'UTF-8').__PS_BASE_URI__.
                 'modules/mercadopago/views/css/mercadopago_core.css',
                 'all'
             );
-            
+
             $data = array(
                 'version' => $mercadopago->getPrestashopVersion(),
-                'one_step' => Configuration::get('PS_ORDER_PROCESS_TYPE')
+                'one_step' => Configuration::get('PS_ORDER_PROCESS_TYPE'),
             );
-            
+
             if (array_key_exists('message', $response) && (strpos($response['message'], 'Invalid users involved') !==
                  false || (strpos($response['message'], 'users from different countries') !== false))) {
                 $data['valid_user'] = false;
             } else {
                 $data['version'] = $mercadopago->getPrestashopVersion();
-                
+
                 $data['status_detail'] = $response['status_detail'];
                 $data['card_holder_name'] = Tools::getValue('cardholderName');
                 $data['four_digits'] = Tools::getValue('lastFourDigits');
