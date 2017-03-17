@@ -678,7 +678,7 @@ class MercadoPago extends PaymentModule
 
     public function hookDisplayHeader()
     {
-        if (! $this->active) {
+        if (!$this->active || $this->context->smarty->tpl_vars['page_name']->value != 'order') {
             return;
         }
 
@@ -768,6 +768,8 @@ class MercadoPago extends PaymentModule
                 if (array_key_exists('init_point', $result['response'])) {
                     $data['standard_banner'] = Configuration::get('MERCADOPAGO_STANDARD_BANNER');
                     $data['preferences_url'] = $result['response']['init_point'];
+
+                    Tools::redirect($data['preferences_url']);
                 } else {
                     $data['preferences_url'] = null;
                     UtilMercadoPago::logMensagem('MercadoPago::hookPayment - An error occurred during preferences creation.' .

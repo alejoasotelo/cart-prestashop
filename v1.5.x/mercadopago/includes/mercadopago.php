@@ -71,11 +71,11 @@ class MP_SDK
                 'grant_type' => 'client_credentials'
             )
         );
-        
+
         $access_data = MPRestCli::post('/oauth/token', $app_client_values, 'application/x-www-form-urlencoded');
-        
+
         $this->access_data = $access_data['response'];
-        
+
         return $this->access_data['access_token'];
     }
 
@@ -94,7 +94,7 @@ class MP_SDK
     {
         $access_token = $this->getAccessToken();
         $result = MPRestCli::get('/users/me?access_token=' . $access_token);
-        
+
         return in_array('test_user', $result['response']['tags']);
     }
 
@@ -102,20 +102,20 @@ class MP_SDK
     {
         $access_token = $this->getAccessToken();
         $result = MPRestCli::get('/users/me?access_token=' . $access_token);
-        
+
         return $result['response']['site_id'];
     }
 
     /**
      * Get information for specific payment
      *
-     * @param int $id            
+     * @param int $id
      * @return array(json)
      */
     public function getPayment($id)
     {
         $access_token = $this->getAccessTokenV1();
-        
+
         $uri_prefix = $this->sandbox ? '/sandbox' : '';
         $payment_info = MPRestCli::get($uri_prefix . '/v1/payments/' . $id . '?access_token=' . $access_token);
         return $payment_info;
@@ -124,13 +124,13 @@ class MP_SDK
     /**
      * Get information for specific payment
      *
-     * @param int $id            
+     * @param int $id
      * @return array(json)
      */
     public function getPaymentStandard($id)
     {
         $access_token = $this->getAccessToken();
-        
+
         $uri_prefix = $this->sandbox ? '/sandbox' : '';
         $payment_info = MPRestCli::get(
             $uri_prefix . '/collections/notifications/' . $id . '?access_token=' . $access_token
@@ -141,13 +141,13 @@ class MP_SDK
     /**
      * Get information for specific payment
      *
-     * @param int $id            
+     * @param int $id
      * @return array(json)
      */
     public function getMerchantOrder($id)
     {
         $access_token = $this->getAccessToken();
-        
+
         $uri_prefix = $this->sandbox ? '/sandbox' : '';
         $merchant_order = MPRestCli::get($uri_prefix . '/merchant_orders/' . $id . '?access_token=' . $access_token);
         return $merchant_order;
@@ -214,7 +214,7 @@ class MP_SDK
     /**
      * Create a checkout preference
      *
-     * @param array $preference            
+     * @param array $preference
      * @return array(json)
      */
     public function createPreference($preference)
@@ -231,7 +231,7 @@ class MP_SDK
     {
         $access_token = $this->getAccessTokenV1();
         $preference_result = MPRestCli::post('/v1/payments?access_token=' . $access_token, $info);
-        
+
         return $preference_result;
     }
 
@@ -241,15 +241,15 @@ class MP_SDK
     public function getCustomer($params)
     {
         $access_token = $this->getAccessTokenV1();
-        
+
         $uri = "/v1/customers/search";
         $params["access_token"] = $access_token;
-        
+
         $uri .= (strpos($uri, "?") === false) ? "?" : "&";
         $uri .= $this->buildQuery($params);
-        
+
         $customer = MPRestCli::get($uri);
-        
+
         return $customer;
     }
 
@@ -272,7 +272,7 @@ class MP_SDK
     {
         $access_token = $this->getAccessTokenV1();
         $customerResponse = MPRestCli::post("/v1/customers?access_token=" . $access_token, $params);
-        
+
         if ($customerResponse == null || $customerResponse["status"] != "200") {
             UtilMercadoPago::logMensagem('MercadoPago::createCustomerCard - Error: Doens\'t possibled to create the Customer', MP_SDK::WARNING);
         }
@@ -286,7 +286,7 @@ class MP_SDK
     {
         $access_token = $this->getAccessTokenV1();
         $uri = "/v1/customers/" . $customerId . "/cards?access_token=" . $access_token;
-        
+
         $result_response = MPRestCli::post($uri, $token);
         return $result_response;
     }
@@ -303,7 +303,7 @@ class MP_SDK
         $access_token = $this->getAccessToken();
         $uri = "/discount_campaigns";
         $params["access_token"] = $access_token;
-        
+
         if (count($params) > 0) {
             $uri .= (strpos($uri, "?") === false) ? "?" : "&";
             $uri .= $this->buildQuery($params);
@@ -337,7 +337,7 @@ class MPRestCli
     private static function getConnect($uri, $method, $content_type)
     {
         $connect = curl_init(self::API_BASE_URL . $uri);
-        
+
         curl_setopt($connect, CURLOPT_USERAGENT, 'MercadoPago Prestashop v' . MP_SDK::VERSION);
         curl_setopt($connect, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($connect, CURLOPT_CUSTOMREQUEST, $method);
@@ -362,37 +362,38 @@ class MPRestCli
             } else {
                 $data = Tools::jsonEncode($data);
             }
-            
+
             if (function_exists('json_last_error')) {
                 $json_error = json_last_error();
                 if ($json_error != JSON_ERROR_NONE)
                     throw new Exception('JSON Error [{$json_error}] - Data: {$data}');
             }
         }
-        
+
         curl_setopt($connect, CURLOPT_POSTFIELDS, $data);
     }
 
     private static function exec($method, $uri, $data, $content_type)
     {
         $connect = self::getConnect($uri, $method, $content_type);
-        
+
         if ($data) {
             self::setData($connect, $data, $content_type);
         }
-        
+
         $api_result = curl_exec($connect);
         $api_http_code = curl_getinfo($connect, CURLINFO_HTTP_CODE);
         $response = array(
             'status' => $api_http_code,
             'response' => Tools::jsonDecode($api_result, true)
         );
-        
+
         if (Configuration::get('MERCADOPAGO_LOG') == 'true') {
+            UtilMercadoPago::logMensagem('MercadoPago.exec :: method = ' . $method . ', uri: ' . $uri, MP_SDK::INFO);
             UtilMercadoPago::logMensagem('MercadoPago.exec :: data = ' . Tools::jsonEncode($data), MP_SDK::INFO);
             UtilMercadoPago::logMensagem('MercadoPago.exec :: response = ' . $api_result, MP_SDK::INFO);
         }
-        
+
         if ($response['status'] == 0) {
             $error = 'Can not call the API, status code 0.';
             throw new Exception($error);
@@ -402,7 +403,7 @@ class MPRestCli
             }
         }
         curl_close($connect);
-        
+
         return $response;
     }
 
