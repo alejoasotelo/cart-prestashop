@@ -2175,13 +2175,27 @@ class MercadoPago extends PaymentModule
             UtilMercadoPago::logMensagem('MercadoPago::listenIPN()::$checkout = '.$checkout, MPApi::INFO);
         }
 
-        if ($checkout == 'standard' && $topic == 'merchant_order' && $id > 0) {
-            $result = $this->mercadopago->getMerchantOrder($id);
-            $merchant_order_info = $result['response'];
+        if ($checkout == 'standard' && ($topic == 'merchant_order' || $topic == 'payment') && $id > 0) {
+
+            if ($topic == 'payment') {
+                $payment_info = $this->mercadopago->getPaymentStandard($id);
+                $merchant_order_info = $this->mercadopago->getMerchantOrder($payment_info["response"]["collection"]["merchant_order_id"]);
+            } else {
+                $result = $this->mercadopago->getMerchantOrder($id);
+                $merchant_order_info = $result['response'];
+            }
 
             // check value
             $cart = new Cart($merchant_order_info['external_reference']);
             $total = (float)$cart->getOrderTotal(true, Cart::BOTH);
+
+            if(Configuration::get('MERCADOPAGO_COUNTRY') == 'MCO'){
+              $products = $cart->getProducts();
+              $total = 0;
+              foreach ($products as $key => $product) {
+                $total += round($product['price_wt'], 0) * $product['quantity'];
+              }
+            }
 
             // check the module
             $id_order = $this->getOrderByCartId($merchant_order_info['external_reference']);
@@ -2242,12 +2256,15 @@ class MercadoPago extends PaymentModule
                 $payment_types[] = $payment_info['payment_type'];
                 $transaction_amounts += $payment_info['transaction_amount'];
                 if ($payment_info['payment_type'] == 'credit_card') {
+                    $cardholder = isset($payment_info['card']['cardholder']['name']) ?
+                                        $payment_info['card']['cardholder']['name'] :
+                                        (isset($payment_info['cardholder']['name']) ? $payment_info['cardholder']['name'] : '');
+
                     $payment_method_ids[] = isset($payment_info['payment_method_id']) ?
                                             $payment_info['payment_method_id'] : '';
                     $credit_cards[] = isset($payment_info['card']['last_four_digits']) ?
                                             '**** **** **** '.$payment_info['card']['last_four_digits'] : '';
-                    $cardholders[] = isset($payment_info['card']['cardholder']['name']) ?
-                                    $payment_info['card']['cardholder']['name'] : '';
+                    $cardholders[] = $cardholder;
                 }
             }
 
@@ -2264,7 +2281,8 @@ class MercadoPago extends PaymentModule
                     $credit_cards,
                     $cardholders,
                     $transaction_amounts,
-                    $external_reference
+                    $external_reference,
+                    $result
                 );
             }
         } elseif ($checkout == 'custom' && $topic == 'payment' && $id > 0) {
@@ -2291,9 +2309,12 @@ class MercadoPago extends PaymentModule
             $payment_types[] = $payment_info['payment_type_id'];
             $transaction_amounts += $payment_info['transaction_amount'];
             if ($payment_info['payment_type_id'] == 'credit_card') {
+                $cardholder = isset($payment_info['card']['cardholder']['name']) ?
+                                        $payment_info['card']['cardholder']['name'] :
+                                        (isset($payment_info['cardholder']['name']) ? $payment_info['cardholder']['name'] : '');
                 $payment_method_ids[] = $payment_info['payment_method_id'];
                 $credit_cards[] = '**** **** **** '.$payment_info['card']['last_four_digits'];
-                $cardholders[] = $payment_info['card']['cardholder']['name'];
+                $cardholders[] = $cardholder;
             }
 
             $this->updateOrder(
@@ -2304,7 +2325,8 @@ class MercadoPago extends PaymentModule
                 $credit_cards,
                 $cardholders,
                 $transaction_amounts,
-                $external_reference
+                $external_reference,
+                $result
             );
         }
     }
