@@ -44,7 +44,7 @@ class MercadoPagoNotificationModuleFrontController extends ModuleFrontController
                 MPApi::INFO
             );
         }
-
+        
         if (Tools::getValue('checkout') && Tools::getValue('data_id') || Tools::getValue('id')) {
             $mercadopago = $this->module;
             if (Tools::getValue('checkout') == "custom") {

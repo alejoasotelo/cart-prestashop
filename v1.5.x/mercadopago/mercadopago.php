@@ -331,7 +331,7 @@ class MercadoPago extends PaymentModule
             true
         );
 
-            $id_mercadoenvios_service_code = 0;
+        $id_mercadoenvios_service_code = 0;
         if (isset($lista_shipping['MP_CARRIER']) &&
             array_key_exists($id_carrier, $lista_shipping['MP_CARRIER'])) {
             $id_mercadoenvios_service_code = $lista_shipping['MP_CARRIER'][$id_carrier];
@@ -1881,14 +1881,14 @@ class MercadoPago extends PaymentModule
             if (! empty($product['id_image'])) {
                 $imagePath = $this->context->link->getImageLink($product['link_rewrite'], $product['id_image']);
             } else {
-                $image = Image::getCover($product['id_product']);
-                $product_image = new Product($product['id_product'], false, Context::getContext()->language->id);
-                $link = new Link();//because getImageLInk is not static function
-                $imagePath = $link->getImageLink(
-                    $product_image->link_rewrite,
-                    $image['id_image'],
-                    ImageType::getFormatedName('home')
-                );
+            $image = Image::getCover($product['id_product']);
+            $product_image = new Product($product['id_product'], false, Context::getContext()->language->id);
+            $link = new Link();//because getImageLInk is not static function
+            $imagePath = $link->getImageLink(
+                $product_image->link_rewrite,
+                $image['id_image'],
+                ImageType::getFormatedName('home')
+            );
             }
 
             $item = array(
@@ -2492,7 +2492,7 @@ class MercadoPago extends PaymentModule
                         $cart->secure_key
                     );
                     if ($payment_type == 'credit_card') {
-                    $this->saveCard($result);
+                        $this->saveCard($result);
                     }
 
                 } elseif (!empty($order) && $order->current_state != null &&
@@ -2578,9 +2578,9 @@ class MercadoPago extends PaymentModule
                 $customer = $this->mercadopago->createCustomerCard($customerData);
 
                 if ($customer['response']['status'] == 200) {
-                $customerID = $customer['response']['id'];
+                    $customerID = $customer['response']['id'];
+                }
             }
-        }
         }
 
         return $customerID;
@@ -2698,9 +2698,9 @@ class MercadoPago extends PaymentModule
         );
 
         $delivery_option_list = $this->context->smarty->tpl_vars['delivery_option_list'];
-            $retornoCalculadora = $this->calculateListCache($address->postcode);
+        $retornoCalculadora = $this->calculateListCache($address->postcode);
 
-                $mpCarrier = $lista_shipping['MP_SHIPPING'];
+        $mpCarrier = $lista_shipping['MP_SHIPPING'];
 
         foreach ($delivery_option_list->value as $id_address) {
 
@@ -2714,15 +2714,15 @@ class MercadoPago extends PaymentModule
                         if (isset($lista_shipping['MP_CARRIER'][intval($id_carrier['instance']->id)])) {
 
                             $id_mercadoenvios_service_code = $lista_shipping['MP_CARRIER'][$id_carrier['instance']->id];
-                                $calculadora = $retornoCalculadora[(string) $id_mercadoenvios_service_code];
+                            $calculadora = $retornoCalculadora[(string) $id_mercadoenvios_service_code];
                             $msg = $calculadora['estimated_delivery'].' '.$this->l('working days.');
 
                             $id_carrier['instance']->delay[$this->context->cart->id_lang] = $this->l('After the post, receive the product ').$msg;
-                            }
                         }
                     }
                 }
-                }
+            }
+        }
 
     }
 
@@ -2918,8 +2918,8 @@ class MercadoPago extends PaymentModule
             $retorno = $this->verifyCache($params, $this->id_carrier);
             $shipping_cost = (float) $retorno['cost'];
             if ($retorno != null) {
-            return $shipping_cost;
-        }
+                return $shipping_cost;
+            }
         }
 
         return false;
