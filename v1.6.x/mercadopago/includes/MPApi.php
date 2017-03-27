@@ -31,7 +31,7 @@ include_once 'MPRestCli.php';
 
 class MPApi
 {
-    const VERSION = '3.3.9';
+    const VERSION = '3.4.1';
 
     /* Info */
     const INFO = 1;
@@ -191,7 +191,7 @@ class MPApi
 
     /**
      * Get information for specific payment
-     *
+     * https://api.mercadolibre.com/shipments/$id_shipment?access_token='
      * @param int $id
      * @return array(json)
      */
@@ -284,6 +284,7 @@ class MPApi
         $access_token = $this->getAccessTokenV1();
         $result = MPRestCli::get('/v1/payment_methods?access_token=' . $access_token);
         $result = $result['response'];
+
         // remove account_money
         foreach ($result as $key => $value) {
             if ($value['payment_type_id'] == 'account_money' || $value['payment_type_id'] == 'credit_card' ||
@@ -339,9 +340,7 @@ class MPApi
     {
         $access_token = $this->getAccessTokenV1();
         $trackingID = "platform:v1-whitelabel,type:prestashop,so:".MPApi::VERSION;
-
         error_log("====ACCESS TOKEN ======".$access_token);
-
         $preference_result = MPRestCli::postTracking(
             '/v1/payments?access_token=' .
             $access_token,

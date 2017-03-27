@@ -98,7 +98,7 @@
 		</p>
 		<p>
 			<strong>{l s='PHP Version' mod='mercadopago'}:</strong><img class="logoCheck" src="{$this_path_ssl|escape:'htmlall':'UTF-8'}modules/mercadopago/views/img/{$requirements.version|escape:'htmlall':'UTF-8'}.png" width="20px;" height="20px">
-		</p>
+		</p>		
 	</div>
 
 	<!--<div id="Testes" class="tabcontent">
@@ -108,8 +108,8 @@
 	  		<strong>Utilizar esses dados de teste?</strong>
 	  	</p>
 	  	<p>
-	  		<input type="radio" name="usuarioTeste" value="Sim"> Sim
-	  		&nbsp;<input type="radio" name="usuarioTeste" value="Nao" checked="true"> Não
+	  		<input type="radio" name="usuarioTeste" value="Sim"> Sim  
+	  		&nbsp;<input type="radio" name="usuarioTeste" value="Nao" checked="true"> Não 
 	  	</p>
 	  	<table>
 	  		<tr>
@@ -134,13 +134,13 @@
 							<td>
 								<strong>Client Secret</strong> lkhgid5r
 							</td>
-						</tr>
+						</tr>	
 						<tr>
 							<td>
 								<strong>Access Token</strong> fkljdksjf3456787456yfsd543436576uhg
 							</td>
-						</tr>
-					</table>
+						</tr>	
+					</table>	  			
 	  			</td>
 	  			<td>
 					<table>
@@ -162,7 +162,7 @@
 						</tr>
 						<tr>
 							<td>&nbsp;</td>
-						</tr>
+						</tr>										
 				  	</table>
 	  			</td>
 	  		</tr>
@@ -184,12 +184,12 @@
 	<div id="Duvidas" class="tabcontent">
 	  	<h3>{l s='Question' mod='mercadopago'}</h3>
 		<p><strong><a href="https://www.youtube.com/playlist?list=PLl8LGzRu2_sXxChIJm1e0xY6dU3Dj_tNi" target="_blank"><img class="logoCheck" src="{$this_path_ssl|escape:'htmlall':'UTF-8'}modules/mercadopago/views/img/youtube.png" width="20px;" height="20px">YouTube</a> </strong></p>
-		<p><strong><a href="https://www.facebook.com/groups/modulos.mercadopago" target="_blank"><img class="logoCheck" src="{$this_path_ssl|escape:'htmlall':'UTF-8'}modules/mercadopago/views/img/facebook.png" width="20px;" height="20px">Facebook</a> </strong></p>
+		<p><strong><a href="https://www.facebook.com/groups/modulos.mercadopago" target="_blank"><img class="logoCheck" src="{$this_path_ssl|escape:'htmlall':'UTF-8'}modules/mercadopago/views/img/facebook.png" width="20px;" height="20px">Facebook</a> </strong></p> 
 
 
 		<p><a href="mailto:developers@mercadopago.com.br?subject=Suport - Prestashop"><img class="logoCheck" src="{$this_path_ssl|escape:'htmlall':'UTF-8'}modules/mercadopago/views/img/email.png" width="20px;" height="20px">developers@mercadopago.com.br</a> </p>
 
-		<p><a href="https://www.mercadopago.com.br/developers/pt/solutions/payments/basic-checkout/test/test-payments/" target="_blank"><img class="logoCheck" src="{$this_path_ssl|escape:'htmlall':'UTF-8'}modules/mercadopago/views/img/credit_card.png" width="20px;" height="20px">{l s='Credit Card for test' mod='mercadopago'}</a></p>
+		<p><a href="https://www.mercadopago.com.br/developers/pt/solutions/payments/basic-checkout/test/test-payments/" target="_blank"><img class="logoCheck" src="{$this_path_ssl|escape:'htmlall':'UTF-8'}modules/mercadopago/views/img/credit_card.png" width="20px;" height="20px">{l s='Credit Card for test' mod='mercadopago'}</a></p>		
 	</div>
 
 	<br>
@@ -598,7 +598,7 @@
 	    // Show the current tab, and add an "active" class to the link that opened the tab
 	    document.getElementById(cityName).style.display = "block";
 	    evt.currentTarget.className += " active";
-	}
+	}	
 	// Get the element with id="defaultOpen" and click on it
 	document.getElementById("defaultOpen").click();
 </script>

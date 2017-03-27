@@ -50,4 +50,3 @@ http://opensource.org/licenses/osl-3.0.php Open Software License (OSL
   ModuleAnalytics.setCheckoutType("basic")
   ModuleAnalytics.put()
 </script>
-
