@@ -38,11 +38,7 @@ class MercadoPagoCustomPaymentModuleFrontController extends ModuleFrontControlle
     {
         // card_token_id
         $mercadopago = $this->module;
-
         $response = $mercadopago->execPayment($_POST);
-
-        error_log("====retorno pagamento=====".Tools::jsonEncode($response));
-
         $order_status = null;
         if (array_key_exists('status', $response)) {
             switch ($response['status']) {
@@ -65,33 +61,19 @@ class MercadoPagoCustomPaymentModuleFrontController extends ModuleFrontControlle
             $extra_vars = array(
                 '{bankwire_owner}' => $mercadopago->textshowemail,
                 '{bankwire_details}' => '',
-                '{bankwire_address}' => '',
+                '{bankwire_address}' => ''
             );
+            error_log("====CUSTOM PAYMENT====".$response['id']);
 
             $id_order = Order::getOrderByCartId($cart->id);
-
             $order = new Order($id_order);
             $existStates = $mercadopago->checkStateExist($id_order, Configuration::get($order_status));
+            error_log("=======existStates placeOrder===========".$existStates);
             if ($existStates) {
                 return;
             }
             $payment_type_id = $response['payment_type_id'];
             $displayName = UtilMercadoPago::setNamePaymentType($payment_type_id);
-
-            $payment_mode = 'boleto';
-            $installments = 1;
-            if (Tools::getIsset('card_token_id')) {
-                $payment_mode = 'cartao';
-                $installments = (int)$response['installments'];
-            }
-
-            $percent = (float) Configuration::get('MERCADOPAGO_DISCOUNT_PERCENT');
-            $id_cart_rule = null;
-            if ($percent > 0) {
-                error_log("Entrou aqui percent====".$percent);
-
-                $id_cart_rule = $mercadopago->applyDiscount($cart, $payment_mode, $installments);
-            }
 
             $mercadopago->validateOrder(
                 $cart->id,
@@ -104,13 +86,6 @@ class MercadoPagoCustomPaymentModuleFrontController extends ModuleFrontControlle
                 false,
                 $cart->secure_key
             );
-
-            if ($id_cart_rule != null) {
-                $cartRule = new CartRule($id_cart_rule);
-                $cartRule->active = false;
-                $cartRule->save();
-            }
-
             $order = new Order($mercadopago->currentOrder);
             $order_payments = $order->getOrderPayments();
             $order_payments[0]->transaction_id = $response['id'];
@@ -121,9 +96,9 @@ class MercadoPagoCustomPaymentModuleFrontController extends ModuleFrontControlle
 
             if (Tools::getIsset('card_token_id')) {
                 // get credit card last 4 digits
-                $four_digits = '**** **** **** '.$response['card']['last_four_digits'];
+                $four_digits = '**** **** **** ' . $response["card"]["last_four_digits"];
 
-                $cardholderName = $response['card']['cardholder']['name'];
+                $cardholderName = $response["card"]["cardholder"]["name"];
 
                 $order_payments[0]->card_number = $four_digits;
                 $order_payments[0]->card_brand = Tools::ucfirst($response['payment_method_id']);
@@ -151,7 +126,7 @@ class MercadoPagoCustomPaymentModuleFrontController extends ModuleFrontControlle
 
             $data = array(
                 'version' => $mercadopago->getPrestashopVersion(),
-                'one_step' => Configuration::get('PS_ORDER_PROCESS_TYPE'),
+                'one_step' => Configuration::get('PS_ORDER_PROCESS_TYPE')
             );
 
             if (array_key_exists('message', $response) && (strpos($response['message'], 'Invalid users involved') !==

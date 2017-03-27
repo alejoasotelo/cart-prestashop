@@ -27,17 +27,17 @@
 
 <ul class="address alternate_item" style="height: 145px;">
 	<li class="address_title">{l s='Ticket' mod='mercadopago'}</li>
-
+							 
 				<li> <span class="address_lastname"><img style="text-align: right;" width="40%" src="{$this_path_ssl|escape:'htmlall':'UTF-8'}modules/mercadopago/views/img/mercadopago.png"></span></li>
 					<li class="address_company"></li>
-
+									 
 				<li><span class="address_vat_number"></span></li>
-
+									 
 				<li><span class="address_address1">{l s='Before printing check the expiration date.' mod='mercadopago'}</span></li>
 				<li>
-					<a href="#" onClick="window.open('{$boleto_url|escape:'htmlall':'UTF-8'}', '_blank')" class="button pull-right">
-					<span>{l s='Open Ticket' mod='mercadopago'} <i class="icon icon-chevron-right right"></i></span></a>
-				</li>
+					<a href="#" onClick="window.open('{$boleto_url|escape:'htmlall':'UTF-8'}', '_blank')" class="button btn btn-default button-medium pull-right">
+					<span>{l s='Open Ticket' mod='mercadopago'}<i class="icon-chevron-right right"></i></span></a>
+				</li>	
 			</ul>
 
 {/if}
