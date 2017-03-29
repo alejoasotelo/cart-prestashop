@@ -2196,9 +2196,7 @@ class MercadoPago extends PaymentModule
 
 
         if (Configuration::get('MERCADOPAGO_LOG') == 'true') {
-            UtilMercadoPago::logMensagem('MercadoPago::listenIPN()::$topic = '.$topic, MPApi::INFO);
-            UtilMercadoPago::logMensagem('MercadoPago::listenIPN()::$id = '.$id, MPApi::INFO);
-            UtilMercadoPago::logMensagem('MercadoPago::listenIPN()::$checkout = '.$checkout, MPApi::INFO);
+            UtilMercadoPago::logMensagem('MercadoPago::listenIPN()::$topic = '.$topic.', $id = '.$id.', $checkout = '.$checkout, $id);
         }
 
         if ($checkout == 'standard' && ($topic == 'merchant_order' || $topic == 'payment') && $id > 0) {
