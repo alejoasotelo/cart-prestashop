@@ -2168,7 +2168,7 @@ class MercadoPago extends PaymentModule
     private function saveCard($result)
     {
         $token = $result['response']['metadata']['card_token_id'];
-        $customerID = $result['response']['metadata']['customer_id'];
+        $customerID = $result['response']['collection']['payer']['id'];
 
         $tokenPagamentoJson = array(
             'token' => $token,
