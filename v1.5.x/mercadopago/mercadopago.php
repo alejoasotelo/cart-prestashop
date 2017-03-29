@@ -2203,7 +2203,8 @@ class MercadoPago extends PaymentModule
 
             if ($topic == 'payment') {
                 $payment_info = $this->mercadopago->getPaymentStandard($id);
-                $merchant_order_info = $this->mercadopago->getMerchantOrder($payment_info["response"]["collection"]["merchant_order_id"]);
+                $result = $this->mercadopago->getMerchantOrder($payment_info["response"]["collection"]["merchant_order_id"]);
+                $merchant_order_info = $result['response'];
             } else {
                 $result = $this->mercadopago->getMerchantOrder($id);
                 $merchant_order_info = $result['response'];
