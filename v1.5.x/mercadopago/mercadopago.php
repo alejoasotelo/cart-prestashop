@@ -2291,9 +2291,12 @@ class MercadoPago extends PaymentModule
                                             '**** **** **** '.$payment_info['card']['last_four_digits'] : '';
                     $cardholders[] = $cardholder;
                 }
+
+                error_log("====Payments ($payment_info['id'])===== status: $payment_info['status'], type: $payment_info['payment_type'], amount: $payment_info['transaction_amount']");
             }
 
             if ($merchant_order_info['total_amount'] == $transaction_amounts) {
+                error_log("====Amount iguales===== $merchant_order_info['total_amount'] == $transaction_amounts");
                 if ($isMercadoEnvios) {
                     $transaction_amounts += $cost_mercadoEnvios;
                 }
@@ -2309,6 +2312,8 @@ class MercadoPago extends PaymentModule
                     $external_reference,
                     $result
                 );
+            } else {
+                error_log("====Amount diferentes===== $merchant_order_info['total_amount'] == $transaction_amounts");
             }
         } elseif ($checkout == 'custom' && $topic == 'payment' && $id > 0) {
             $result = $this->mercadopago->getPayment($id);

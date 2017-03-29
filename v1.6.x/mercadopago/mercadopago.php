@@ -95,7 +95,7 @@ class MercadoPago extends PaymentModule
         $this->need_instance = 0;
         $this->module_key = '4380f33bbe84e7899aacb0b7a601376f';
         $this->ps_versions_compliancy = array(
-            'min' => '1.6',
+            'min' => '1.5',
             'max' => '1.7',
         );
 
@@ -850,10 +850,8 @@ class MercadoPago extends PaymentModule
 
                 }
             } catch (Exception $e) {
-                UtilMercadoPago::logMensagem(
-                    'MercadoPago::getContent - Fatal Error: '.$e->getMessage(),
-                    MPApi::FATAL_ERROR
-                );
+                UtilMercadoPago::logMensagem('MercadoPago::getContent - Fatal Error: '.$e->getMessage(),
+                    MPApi::FATAL_ERROR);
                 $this->context->smarty->assign(
                     array(
                         'message_error' => $e->getMessage(),
@@ -2198,16 +2196,15 @@ class MercadoPago extends PaymentModule
 
 
         if (Configuration::get('MERCADOPAGO_LOG') == 'true') {
-            UtilMercadoPago::logMensagem('MercadoPago :: listenIPN - topic = '.$topic, MPApi::INFO);
-            UtilMercadoPago::logMensagem('MercadoPago :: listenIPN - id = '.$id, MPApi::INFO);
-            UtilMercadoPago::logMensagem('MercadoPago :: listenIPN - checkout = '.$checkout, MPApi::INFO);
+            UtilMercadoPago::logMensagem('MercadoPago::listenIPN()::$topic = '.$topic.', $id = '.$id.', $checkout = '.$checkout, $id);
         }
 
         if ($checkout == 'standard' && ($topic == 'merchant_order' || $topic == 'payment') && $id > 0) {
 
             if ($topic == 'payment') {
                 $payment_info = $this->mercadopago->getPaymentStandard($id);
-                $merchant_order_info = $this->mercadopago->getMerchantOrder($payment_info["response"]["collection"]["merchant_order_id"]);
+                $result = $this->mercadopago->getMerchantOrder($payment_info["response"]["collection"]["merchant_order_id"]);
+                $merchant_order_info = $result['response'];
             } else {
                 $result = $this->mercadopago->getMerchantOrder($id);
                 $merchant_order_info = $result['response'];
@@ -2294,9 +2291,12 @@ class MercadoPago extends PaymentModule
                                             '**** **** **** '.$payment_info['card']['last_four_digits'] : '';
                     $cardholders[] = $cardholder;
                 }
+
+                error_log("====Payments ($payment_info['id'])===== status: $payment_info['status'], type: $payment_info['payment_type'], amount: $payment_info['transaction_amount']");
             }
 
             if ($merchant_order_info['total_amount'] == $transaction_amounts) {
+                error_log("====Amount iguales===== $merchant_order_info['total_amount'] == $transaction_amounts");
                 if ($isMercadoEnvios) {
                     $transaction_amounts += $cost_mercadoEnvios;
                 }
@@ -2312,6 +2312,8 @@ class MercadoPago extends PaymentModule
                     $external_reference,
                     $result
                 );
+            } else {
+                error_log("====Amount diferentes===== $merchant_order_info['total_amount'] == $transaction_amounts");
             }
         } elseif ($checkout == 'custom' && $topic == 'payment' && $id > 0) {
             $result = $this->mercadopago->getPayment($id);
@@ -2337,9 +2339,12 @@ class MercadoPago extends PaymentModule
             $payment_types[] = $payment_info['payment_type_id'];
             $transaction_amounts += $payment_info['transaction_amount'];
             if ($payment_info['payment_type_id'] == 'credit_card') {
+                $cardholder = isset($payment_info['card']['cardholder']['name']) ?
+                                        $payment_info['card']['cardholder']['name'] :
+                                        (isset($payment_info['cardholder']['name']) ? $payment_info['cardholder']['name'] : '');
                 $payment_method_ids[] = $payment_info['payment_method_id'];
                 $credit_cards[] = '**** **** **** '.$payment_info['card']['last_four_digits'];
-                $cardholders[] = $payment_info['card']['cardholder']['name'];
+                $cardholders[] = $cardholder;
             }
 
             $this->updateOrder(
