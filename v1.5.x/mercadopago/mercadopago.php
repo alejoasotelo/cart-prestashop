@@ -1908,7 +1908,7 @@ class MercadoPago extends PaymentModule
             $items[] = $item;
 
             $tmp_fix_title[] = $product['quantity'].'x '.ucwords(strtolower($product['name']));
-            $tmp_fix_price += $product['price_wt'] * (int)$product['quantity'];
+            $tmp_fix_price += round($product['price_wt'], $round_place) * (int)$product['quantity'];
 
             if ($tmp_fix_image_url == '')
                 $tmp_fix_image_url = $imagePath;
@@ -2136,7 +2136,11 @@ class MercadoPago extends PaymentModule
     public function createStandardCheckoutPreference()
     {
         $preferences = $this->getPrestashopPreferencesStandard(null);
-        error_log("=====preferences=====".Tools::jsonEncode($preferences));
+        //error_log("=====preferences=====".Tools::jsonEncode($preferences));
+        if (Configuration::get('MERCADOPAGO_LOG') == 'true') {
+            UtilMercadoPago::logMensagem('MercadoPago::createStandardCheckoutPreference()::$id = '.$id.', preferences: '. Tools::jsonEncode($preferences), $id);
+        }
+
         return $this->mercadopago->createPreference($preferences);
     }
 
@@ -2194,21 +2198,14 @@ class MercadoPago extends PaymentModule
         $cost_mercadoEnvios = 0;
         $isMercadoEnvios = 0;
 
-
         if (Configuration::get('MERCADOPAGO_LOG') == 'true') {
             UtilMercadoPago::logMensagem('MercadoPago::listenIPN()::$topic = '.$topic.', $id = '.$id.', $checkout = '.$checkout, $id);
         }
 
-        if ($checkout == 'standard' && ($topic == 'merchant_order' || $topic == 'payment') && $id > 0) {
+        if ($checkout == 'standard' && $topic == 'merchant_order' && $id > 0) {
 
-            if ($topic == 'payment') {
-                $payment_info = $this->mercadopago->getPaymentStandard($id);
-                $result = $this->mercadopago->getMerchantOrder($payment_info["response"]["collection"]["merchant_order_id"]);
-                $merchant_order_info = $result['response'];
-            } else {
-                $result = $this->mercadopago->getMerchantOrder($id);
-                $merchant_order_info = $result['response'];
-            }
+            $result = $this->mercadopago->getMerchantOrder($id);
+            $merchant_order_info = $result['response'];
 
             // check value
             $cart = new Cart($merchant_order_info['external_reference']);
@@ -2222,20 +2219,29 @@ class MercadoPago extends PaymentModule
               }
             }
 
-            // check the module
-            $id_order = $this->getOrderByCartId($merchant_order_info['external_reference']);
-            $order = new Order($id_order);
-            error_log("=====module======".$order->module);
-            error_log("=====external_reference======".$merchant_order_info['external_reference']);
-            error_log("=====id_order======".$order->$id);
+            if (Configuration::get('MERCADOPAGO_LOG') == 'true') {
 
-            error_log("=====total======".$total);
-            error_log("=====total mercadopago======".$merchant_order_info['total_amount']);
+                // check the module
+                $id_order = $this->getOrderByCartId($merchant_order_info['external_reference']);
+                if ($id_order != false) {
+                    $order = new Order($id_order);
+                    UtilMercadoPago::logMensagem('MercadoPago::listenIPN()::$id = '.$id.', module = '.$order->module.', external_reference = '.$merchant_order_info['external_reference'].', id_order = '.$order->id, $id);
+                } else {
+                    UtilMercadoPago::logMensagem('MercadoPago::listenIPN()::$id = '.$id.', module = , external_reference = '.$merchant_order_info['external_reference'].', id_order = no existe', $id);
+                }
+
+                UtilMercadoPago::logMensagem('MercadoPago::listenIPN()::$id = '.$id.', total = '.$total.', total_mercadopago = '.$merchant_order_info['total_amount'], $id);
+            }
+
             $total_amount = $merchant_order_info['total_amount'];
             if ($total_amount != $total) {
-                error_log("=====valores diferentes e ipn ignorada======");
+                //error_log("=====valores diferentes e ipn ignorada======");
+                if (Configuration::get('MERCADOPAGO_LOG') == 'true') {
+                    UtilMercadoPago::logMensagem('MercadoPago::listenIPN()::$id = '.$id.', valores diferentes e ipn ignorada', $id);
+                }
                 return;
             }
+
             $status_shipment = null;
             if (isset($merchant_order_info['shipments'][0]) &&
                 $merchant_order_info['shipments'][0]['shipping_mode'] == 'me2') {
@@ -2292,11 +2298,19 @@ class MercadoPago extends PaymentModule
                     $cardholders[] = $cardholder;
                 }
 
-                error_log('====Payments ('.$payment_info['id'].')===== status: '.$payment_info['status'].', type: '.$payment_info['payment_type'].', amount: '.$payment_info['transaction_amount']);
+                if (Configuration::get('MERCADOPAGO_LOG') == 'true') {
+                    $msg = 'MercadoPago::listenIPN()::$id = '.$id.', carrito: '.$external_reference.', Payments ('.$payment_info['id'].'): '.$payment_info['status'].', type: '.$payment_info['payment_type'].', amount: '.$payment_info['transaction_amount'];
+                    UtilMercadoPago::logMensagem($msg, $id);
+                }
             }
 
             if ($merchant_order_info['total_amount'] == $transaction_amounts) {
-                error_log('====Amount iguales===== '.$merchant_order_info['total_amount'].' == '.$transaction_amounts);
+
+                if (Configuration::get('MERCADOPAGO_LOG') == 'true') {
+                    $msg = 'MercadoPago::listenIPN()::$id = '.$id.', carrito: '.$external_reference.', Amount iguales: '.$merchant_order_info['total_amount'].' == '.$transaction_amounts;
+                    UtilMercadoPago::logMensagem($msg, $id);
+                }
+
                 if ($isMercadoEnvios) {
                     $transaction_amounts += $cost_mercadoEnvios;
                 }
@@ -2313,7 +2327,10 @@ class MercadoPago extends PaymentModule
                     $result
                 );
             } else {
-                error_log('====Amount diferentes===== '.$merchant_order_info['total_amount'].' == '.$transaction_amounts);
+                if (Configuration::get('MERCADOPAGO_LOG') == 'true') {
+                    $msg = 'MercadoPago::listenIPN()::$id = '.$id.', carrito: '.$external_reference.', Amount diferentes: ' . $merchant_order_info['total_amount'].' == '.$transaction_amounts .', Payments count: '.count($payments);
+                    UtilMercadoPago::logMensagem($msg, $id);
+                }
             }
         } elseif ($checkout == 'custom' && $topic == 'payment' && $id > 0) {
             $result = $this->mercadopago->getPayment($id);
