@@ -33,8 +33,8 @@ class UtilMercadoPago
         if ($version >= 6) {
             PrestaShopLogger::addLog(
                 $mensagem,
+                1,
                 $nivel,
-                0,
                 null,
                 null,
                 true
@@ -42,8 +42,8 @@ class UtilMercadoPago
         } else if ($version == 5) {
             Logger::addLog(
                 $mensagem,
+                1,
                 $nivel,
-                null,
                 null,
                 null,
                 true
