@@ -2335,6 +2335,11 @@ class MercadoPago extends PaymentModule
         } elseif ($checkout == 'custom' && $topic == 'payment' && $id > 0) {
             $result = $this->mercadopago->getPayment($id);
 
+            if (Configuration::get('MERCADOPAGO_LOG') == 'true') {
+                $msg = 'MercadoPago::listenIPN()::RESULT PAYMENT: '.Tools::jsonEncode($result);
+                UtilMercadoPago::logMensagem($msg, $id);
+            }
+
             error_log("====RESULT PAYMENT===".Tools::jsonEncode($result));
 
             $payment_info = $result['response'];
@@ -2471,10 +2476,12 @@ class MercadoPago extends PaymentModule
                 if ($id_order) {
                     $order = new Order($id_order);
 
-                    $existStates = $this->checkStateExist(
-                        $id_order,
-                        Configuration::get($order_status)
-                    );
+                    if (Configuration::get('MERCADOPAGO_LOG') == 'true') {
+                        $msg = 'MercadoPago::updateOrder()::$id_order = ' . $id_order . ', $order_status = ' . $order_status.', config_status = ' . Configuration::get($order_status);
+                        UtilMercadoPago::logMensagem($msg, MPApi::FATAL_ERROR);
+                    }
+
+                    $existStates = $this->checkStateExist($id_order, Configuration::get($order_status));
                     if ($existStates) {
                         return;
                     }
@@ -2482,9 +2489,13 @@ class MercadoPago extends PaymentModule
 
                 // If order wasn't created yet and payment is approved or pending or in_process, create it.
                 // This can happen when user closes checkout standard
-                if (empty($id_order) && ($payment_status == 'in_process' || $payment_status == 'approved' ||
-                    $payment_status == 'pending')
-                    ) {
+                if (empty($id_order) && ($payment_status == 'in_process' || $payment_status == 'approved' || $payment_status == 'pending')) {
+
+                    if (Configuration::get('MERCADOPAGO_LOG') == 'true') {
+                        $msg = 'MercadoPago::listenIPN():: No existe el pedido. id_cart = ' . $id_cart . ', payment_status = ' . $payment_status;
+                        UtilMercadoPago::logMensagem($msg, MPApi::FATAL_ERROR);
+                    }
+
                     $cart = new Cart($id_cart);
                     $total = (double) number_format($transaction_amounts, 2, '.', '');
                     $extra_vars = array(
@@ -2492,6 +2503,7 @@ class MercadoPago extends PaymentModule
                         '{bankwire_details}' => '',
                         '{bankwire_address}' => '',
                     );
+
                     $id_order = !$id_order ? $this->getOrderByCartId($id_cart) : $id_order;
                     $order = new Order($id_order);
                     $existStates = $this->checkStateExist($id_order, Configuration::get($order_status));
@@ -2501,19 +2513,31 @@ class MercadoPago extends PaymentModule
 
                     $displayName = UtilMercadoPago::setNamePaymentType($payment_type);
 
-                    $this->validateOrder(
-                        $id_cart,
-                        Configuration::get($order_status),
-                        $total,
-                        $displayName,
-                        null,
-                        $extra_vars,
-                        $cart->id_currency,
-                        false,
-                        $cart->secure_key
-                    );
-                    if ($payment_type == 'credit_card') {
-                        $this->saveCard($result);
+                    try{
+                        $ret = $this->validateOrder(
+                            $id_cart,
+                            Configuration::get($order_status),
+                            $total,
+                            $displayName,
+                            null,
+                            $extra_vars,
+                            $cart->id_currency,
+                            false,
+                            $cart->secure_key
+                        );
+                        if ($payment_type == 'credit_card') {
+                            $this->saveCard($result);
+                        }
+
+                        if (Configuration::get('MERCADOPAGO_LOG') == 'true') {
+                            $msg = 'MercadoPago::listenIPN():: '.($ret ? 'Se creó el pedido del id_cart: '.$id_cart . ', order: '.var_dump($this->getOrderByCartId($id_cart))  : 'No se pudo crear el pedido del id_cart: '.$id_cart);
+                            UtilMercadoPago::logMensagem($msg, MPApi::FATAL_ERROR);
+                        }
+                    } catch(Exception $e) {
+                        if (Configuration::get('MERCADOPAGO_LOG') == 'true') {
+                            $msg = 'MercadoPago::listenIPN():: No se pudo crear el pedido del id_cart: '.$id_cart.', error: ' . $e->getMessage();
+                            UtilMercadoPago::logMensagem($msg, MPApi::FATAL_ERROR);
+                        }
                     }
 
                 } elseif (!empty($order) && $order->current_state != null &&
