@@ -2219,10 +2219,24 @@ class MercadoPago extends PaymentModule
               }
             }
 
+            // check the module
+            $id_order = $this->getOrderByCartId($merchant_order_info['external_reference']);
+
+            /* Guardo el valor del pedido y no del carrito. Si el valor del
+            * carrito no es igual, comparo con el del pedido. Puede pasar
+            * que al hacer un descuento se pague con un cupon al momento del descuento
+            * pero se efectivice el pago al terminar el descuento, por lo tanto el
+            * carrito tiene diferente valor al momento de recibir el IPN.
+            */
+            if ($id_order > 0) {
+                $order = new Order($id_order);
+                $total_pedido = (float)$order->total_paid_tax_incl;
+            } else {
+                $total_pedido = 0;
+            }
+
             if (Configuration::get('MERCADOPAGO_LOG') == 'true') {
 
-                // check the module
-                $id_order = $this->getOrderByCartId($merchant_order_info['external_reference']);
                 if ($id_order != false) {
                     $order = new Order($id_order);
                     UtilMercadoPago::logMensagem('MercadoPago::listenIPN()::$id = '.$id.', module = '.$order->module.', external_reference = '.$merchant_order_info['external_reference'].', id_order = '.$order->id, $id);
@@ -2230,16 +2244,20 @@ class MercadoPago extends PaymentModule
                     UtilMercadoPago::logMensagem('MercadoPago::listenIPN()::$id = '.$id.', module = , external_reference = '.$merchant_order_info['external_reference'].', id_order = no existe', $id);
                 }
 
-                UtilMercadoPago::logMensagem('MercadoPago::listenIPN()::$id = '.$id.', total = '.$total.', total_mercadopago = '.$merchant_order_info['total_amount'], $id);
+                UtilMercadoPago::logMensagem('MercadoPago::listenIPN()::$id = '.$id.', total = '.$total.', total_mercadopago = '.$merchant_order_info['total_amount'] . ', total_pedido = ' . $total_pedido, $id);
             }
 
             $total_amount = $merchant_order_info['total_amount'];
             if ($total_amount != $total) {
                 //error_log("=====valores diferentes e ipn ignorada======");
                 if (Configuration::get('MERCADOPAGO_LOG') == 'true') {
-                    UtilMercadoPago::logMensagem('MercadoPago::listenIPN()::$id = '.$id.', valores diferentes e ipn ignorada', $id);
+                    UtilMercadoPago::logMensagem('MercadoPago::listenIPN()::$id = '.$id.', valores diferentes (carrito) e ipn ignorada', $id);
                 }
-                return;
+
+                // Chequeo contra el valor del pedido.
+                if ($total_pedido != $total) {
+                    return;
+                }
             }
 
             $status_shipment = null;
@@ -2481,9 +2499,11 @@ class MercadoPago extends PaymentModule
                         UtilMercadoPago::logMensagem($msg, MPApi::FATAL_ERROR);
                     }
 
-                    $existStates = $this->checkStateExist($id_order, Configuration::get($order_status));
-                    if ($existStates) {
-                        return;
+                    if ($id_order > 0){
+                        $existStates = $this->checkStateExist($id_order, Configuration::get($order_status));
+                        if ($existStates) {
+                            return;
+                        }
                     }
                 }
 
@@ -2506,9 +2526,12 @@ class MercadoPago extends PaymentModule
 
                     $id_order = !$id_order ? $this->getOrderByCartId($id_cart) : $id_order;
                     $order = new Order($id_order);
-                    $existStates = $this->checkStateExist($id_order, Configuration::get($order_status));
-                    if ($existStates) {
-                        return;
+
+                    if ($order->id > 0) {
+                        $existStates = $this->checkStateExist($id_order, Configuration::get($order_status));
+                        if ($existStates) {
+                            return;
+                        }
                     }
 
                     $displayName = UtilMercadoPago::setNamePaymentType($payment_type);
