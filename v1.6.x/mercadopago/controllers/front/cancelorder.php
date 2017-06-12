@@ -28,7 +28,6 @@ include_once dirname(__FILE__) . '/../../includes/MPApi.php';
 
 class MercadoPagoCancelOrderModuleFrontController extends ModuleFrontController
 {
-
     public function initContent()
     {
         parent::initContent();
@@ -41,36 +40,40 @@ class MercadoPagoCancelOrderModuleFrontController extends ModuleFrontController
         $mercadopago = $this->module;
         $mercadopago_sdk = $mercadopago->mercadopago;
 
-        $order = new Order(Tools::getValue("id_order"));
-        $order_payments =  $order->getOrderPayments();  
-        foreach ($order_payments as $order_payment) {
+        $token = Tools::getAdminToken('AdminOrder'.Tools::getValue('id_order'));
 
-            if ($order_payment->transaction_id > 0) {
-                $result = $mercadopago_sdk->getPayment($order_payment->transaction_id);
-                if ($result['status'] == 200) {
-                    $responseCancel = $mercadopago_sdk->cancelPaymentsCustom(
-                        $order_payment->transaction_id
-                    );
-                } else {
-                    $result = $mercadopago_sdk->getPaymentStandard($order_payment->transaction_id);
+        $token_form = Tools::getValue('token_form');
+        //check token
+        if ($token == $token_form) {
 
-                    $responseCancel = $mercadopago_sdk->cancelPaymentsStandard(
-                        $order_payment->transaction_id
-                    );             
+            $order = new Order(Tools::getValue("id_order"));
+            $order_payments =  $order->getOrderPayments();
+            foreach ($order_payments as $order_payment) {
+                if ($order_payment->transaction_id > 0) {
+                    $result = $mercadopago_sdk->getPayment($order_payment->transaction_id);
+                    if ($result['status'] == 200) {
+                        $responseCancel = $mercadopago_sdk->cancelPaymentsCustom(
+                            $order_payment->transaction_id
+                        );
+                    } else {
+                        $result = $mercadopago_sdk->getPaymentStandard($order_payment->transaction_id);
+                        $responseCancel = $mercadopago_sdk->cancelPaymentsStandard(
+                            $order_payment->transaction_id
+                        );
+                    }
                 }
+                break;
             }
 
-            break;
+            $url = (Configuration::get('PS_SSL_ENABLED') ? 'https://' : 'http://') .
+                                         htmlspecialchars($_SERVER['HTTP_HOST'], ENT_COMPAT, 'UTF-8') . __PS_BASE_URI__;
+
+            if ($responseCancel != null && $responseCancel['status'] == 200) {
+                $mercadopago->updateOrderHistory($order->id, Configuration::get('PS_OS_CANCELED'));
+            }
+
+            $redirect = $this->context->link->getAdminLink('AdminOrders');
+            Tools::redirectAdmin($redirect);
         }
-
-        $url = (Configuration::get('PS_SSL_ENABLED') ? 'https://' : 'http://') .
-                                     htmlspecialchars($_SERVER['HTTP_HOST'], ENT_COMPAT, 'UTF-8') . __PS_BASE_URI__;
-
-        if ($responseCancel != null && $responseCancel['status'] == 200) {
-            $mercadopago->updateOrderHistory($order->id, Configuration::get('PS_OS_CANCELED'));
-        }
-
-        Tools::redirectAdmin("http://localhost:8888/prestashop_teste/admin092p1atwr/index.php?controller=AdminOrders&id_order=650&vieworder&token=05a0706998e10c3519887e3fd5c82ddb");
     }
-
 }
