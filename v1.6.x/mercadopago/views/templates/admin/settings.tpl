@@ -189,7 +189,7 @@
 
 		<p><a href="mailto:developers@mercadopago.com.br?subject=Suport - Prestashop"><img class="logoCheck" src="{$this_path_ssl|escape:'htmlall':'UTF-8'}modules/mercadopago/views/img/email.png" width="20px;" height="20px">developers@mercadopago.com.br</a> </p>
 
-		<p><a href="https://www.mercadopago.com.br/developers/pt/solutions/payments/basic-checkout/test/test-payments/" target="_blank"><img class="logoCheck" src="{$this_path_ssl|escape:'htmlall':'UTF-8'}modules/mercadopago/views/img/credit_card.png" width="20px;" height="20px">{l s='Credit Card for test' mod='mercadopago'}</a></p>		
+		<p><a href="https://www.mercadopago.com.br/developers/pt/solutions/payments/basic-checkout/test/test-payments/" target="_blank"><img class="logoCheck" src="{$this_path_ssl|escape:'htmlall':'UTF-8'}modules/mercadopago/views/img/credit_card.png" width="20px;" height="20px">{l s='Credit Card for test' mod='mercadopago'}</a></p>
 	</div>
 
 	<br>
@@ -201,8 +201,8 @@
 		<a href="https://www.mercadopago.com/mco/account/credentials" target="_blank"><u>{l s='Colombia' mod='mercadopago'}</u></a> |
 		<a href="https://www.mercadopago.com/mlc/account/credentials" target="_blank"><u>{l s='Chile' mod='mercadopago'}</u></a> |
 		<a href="https://www.mercadopago.com/mlm/account/credentials" target="_blank"><u>{l s='Mexico' mod='mercadopago'}</u></a> |
-		<a href="https://www.mercadopago.com/mlv/account/credentials" target="_blank"><u>{l s='Venezuela' mod='mercadopago'}</u></a>
-
+		<a href="https://www.mercadopago.com/mlv/account/credentials" target="_blank"><u>{l s='Venezuela' mod='mercadopago'}</u></a> |
+		<a href="https://www.mercadopago.com/mlu/account/credentials" target="_blank"><u>{l s='Uruguay' mod='mercadopago'}</u></a>
 	<form action="{$uri|escape:'htmlall':'UTF-8'}" method="post">
 		<fieldset>
 			<legend>
@@ -216,11 +216,6 @@
 			<label>{l s='Client Secret:' mod='mercadopago'}</label>
 			<div class="">
 				<input type="text" size="33" required="true" name="MERCADOPAGO_CLIENT_SECRET" value="{$client_secret|escape:'htmlall':'UTF-8'}" />
-			</div>
-			<br />
-			<label>{l s='Access Token:' mod='mercadopago'}</label>
-			<div class="">
-				<input type="text" size="60" required="true" name="MERCADOPAGO_ACCESS_TOKEN" value="{$access_token|escape:'htmlall':'UTF-8'}" />
 			</div>
 			<br />
 			{if !empty($country)}
@@ -260,6 +255,22 @@
 				<br />
 		</fieldset>
 		{if $country == 'MLB' || $country == 'MLM' || $country == 'MLA' || $country == 'MLC' || $country == 'MCO' || $country == 'MLV' || $country == 'MPE'}
+
+			<fieldset>
+				<legend>
+					<img src="../img/admin/contact.gif" />{l s='Settings - Custom' mod='mercadopago'}
+				</legend>
+				<label>{l s='Public Key:' mod='mercadopago'}</label>
+				<div class="">
+					<input type="text" size="33" name="MERCADOPAGO_PUBLIC_KEY" value="{$public_key|escape:'htmlall':'UTF-8'}" />
+				</div>
+				<br />
+				<label>{l s='Access Token:' mod='mercadopago'}</label>
+				<div class="">
+					<input type="text" size="60" name="MERCADOPAGO_ACCESS_TOKEN" value="{$access_token|escape:'htmlall':'UTF-8'}" />
+				</div>
+			</fieldset>
+
 			<fieldset>
 				<legend>
 					<img src="../img/admin/contact.gif" />{l s='Settings - Custom Credit Card' mod='mercadopago'}
@@ -270,11 +281,6 @@
 						<option value="true">{l s='Yes' mod='mercadopago'}</option>
 						<option value="false">{l s='No' mod='mercadopago'} </option>
 					</select>
-				</div>
-				<br />
-				<label>{l s='Public Key:' mod='mercadopago'}</label>
-				<div class="">
-					<input type="text" size="33" name="MERCADOPAGO_PUBLIC_KEY" value="{$public_key|escape:'htmlall':'UTF-8'}" />
 				</div>
 				<br/>
 				<label>{l s='Banner:' mod='mercadopago'}</label>
@@ -315,7 +321,21 @@
 						<option value="false">{l s='No' mod='mercadopago'} </option>
 					</select>
 				</div>
+				<br>
+				<label>{l s='Custom Text:' mod='mercadopago'}</label>
+				<div class="">
+					<input type="text" size="50" name="MERCADOPAGO_CUSTOM_TEXT" value="{$custom_text|escape:'htmlall':'UTF-8'}" />
+				</div>
+				<br>
+				<label>{l s='Payments with two cards: ' mod='mercadopago'}</label>
+				<div class="">
+					<select name="MERCADOPAGO_TWO_CARDS" id="two_cards" alt="Checkout Standard">
+						<option value="active">{l s='Yes' mod='mercadopago'} </option>
+						<option value="inactive">{l s='No' mod='mercadopago'} </option>
+					</select>
+				</div>
 				<br />
+
 				<label>{l s='Banner:' mod='mercadopago'}</label>
 				<div class="">
 					<input type="text" size="33" name="MERCADOPAGO_STANDARD_BANNER" value="{$standard_banner|escape:'htmlall':'UTF-8'}" />
@@ -368,7 +388,7 @@
 					<br>
 					<h3>{l s='Settings Mercado Envios' mod='mercadopago'}</h3>
 						<ul>
-							<li><span style="color:red;">**** &nbsp;</span>{l s='Mercado Envios works only with Checkout Standard' mod='mercadopago'}</li>
+							<li><h3>{l s='Mercado Envios works only with Checkout Standard' mod='mercadopago'}</h3>
 							{if $country == 'MLA'}
 									<li><a target="_blank" href="https://www.mercadopago.com.ar/envios">Activa MercadoEnvíos</a></li>
 									<li>
@@ -377,18 +397,18 @@
 							{if $country == 'MLM'}
 								<ul>
 									<li>
-										<a target="_blank" href="https://www.mercadopago.com.mx/envios">Activa MercadoEnvíos</a>
+										<h3><a target="_blank" href="https://www.mercadopago.com.mx/envios">Activa MercadoEnvíos</a></h3>
 									</li>
 									<li>
-										Consulta los <a target="_blank" href="http://www.dhl.com.mx/content/dam/downloads/language_masters/express/es/shipping/weights_and_dimensions/weights_and_dimensions_es_lm.pdf">valores admitidos por DHL</a>.
+										<h3>Consulta los <a target="_blank" href="http://www.dhl.com.mx/content/dam/downloads/language_masters/express/es/shipping/weights_and_dimensions/weights_and_dimensions_es_lm.pdf">valores admitidos por DHL</a>.</h3>
 									</li>
 								{/if}
 								{if $country == 'MLB'}
 									<li>
-										<a target="_blank" href="https://www.mercadopago.com.br/envios">Ativar MercadoEnvios</a>
+										<h3><a target="_blank" href="https://www.mercadopago.com.br/envios">Ativar MercadoEnvios</a></h3>
 									</li>
 									<li>
-										Consultar os <a target="_blank" href="http://www.correios.com.br/para-voce/precisa-de-ajuda/limites-de-dimensoes-e-de-peso">valores permitidos pelos Correios</a>.
+										<h3>Consultar os <a target="_blank" href="http://www.correios.com.br/para-voce/precisa-de-ajuda/limites-de-dimensoes-e-de-peso">valores permitidos pelos Correios</a>.</h3>
 									</li>
 								{/if}
 						</ul>
@@ -441,6 +461,26 @@
 			{/if}
 			<fieldset>
 				<legend>
+					<img src="../img/admin/contact.gif"/>{l s='Point' mod='mercadopago'}
+				</legend>
+
+				<table>
+					<tr>
+						<td>
+							<label>{l s='Enable payments with POINT: ' mod='mercadopago'}</label>
+							<select name="MERCADOPAGO_POINT" id="point_active">
+								<option value="true">{l s='Yes' mod='mercadopago'} </option>
+								<option value="false">{l s='No' mod='mercadopago'} </option>
+							</select>
+						</td>
+						<td>
+							<img class="logo" src="{$this_path_ssl|escape:'htmlall':'UTF-8'}modules/mercadopago/views/img/mercadopago_point_2.jpg" width="100px;">
+						</td>
+					</tr>
+				</table>
+			</fieldset>
+			<fieldset>
+				<legend>
 					<img src="../img/admin/contact.gif" />{l s='Settings' mod='mercadopago'}
 				</legend>
 
@@ -451,15 +491,6 @@
 						<option value="false">{l s='No' mod='mercadopago'} </option>
 					</select>
 				</div>
-				<br>
-				<label>{l s='Payments with two cards: ' mod='mercadopago'}</label>
-				<div class="">
-					<select name="MERCADOPAGO_TWO_CARDS" id="two_cards" alt="Checkout Standard">
-						<option value="active">{l s='Yes' mod='mercadopago'} </option>
-						<option value="inactive">{l s='No' mod='mercadopago'} </option>
-					</select>
-				</div>
-
 			</fieldset>
 		{/if}
 		{if empty($country)}
@@ -494,6 +525,10 @@
 		}
 		if (document.getElementById("coupon_ticket_active")){
 			document.getElementById("coupon_ticket_active").value = "{$coupon_ticket_active|escape:'htmlall':'UTF-8'}";
+		}
+
+		if (document.getElementById("point_active")){
+			document.getElementById("point_active").value = "{$point_active|escape:'htmlall':'UTF-8'}";
 		}
 
 		document.getElementById("two_cards").value = "{$two_cards|escape:'htmlall':'UTF-8'}";

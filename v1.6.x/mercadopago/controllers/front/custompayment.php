@@ -41,8 +41,6 @@ class MercadoPagoCustomPaymentModuleFrontController extends ModuleFrontControlle
 
         $response = $mercadopago->execPayment($_POST);
 
-        error_log("====retorno pagamento=====".Tools::jsonEncode($response));
-
         $order_status = null;
         if (array_key_exists('status', $response)) {
             switch ($response['status']) {
@@ -76,7 +74,7 @@ class MercadoPagoCustomPaymentModuleFrontController extends ModuleFrontControlle
                 return;
             }
             $payment_type_id = $response['payment_type_id'];
-            $displayName = UtilMercadoPago::setNamePaymentType($payment_type_id);
+            $displayName = $mercadopago->setNamePaymentType($payment_type_id);
 
             $payment_mode = 'boleto';
             $installments = 1;
@@ -88,8 +86,6 @@ class MercadoPagoCustomPaymentModuleFrontController extends ModuleFrontControlle
             $percent = (float) Configuration::get('MERCADOPAGO_DISCOUNT_PERCENT');
             $id_cart_rule = null;
             if ($percent > 0) {
-                error_log("Entrou aqui percent====".$percent);
-
                 $id_cart_rule = $mercadopago->applyDiscount($cart, $payment_mode, $installments);
             }
 
@@ -170,7 +166,6 @@ class MercadoPagoCustomPaymentModuleFrontController extends ModuleFrontControlle
                     new Currency(Context::getContext()->cart->id_currency),
                     false
                 );
-                error_log("=====response=====".);
                 $data['payment_id'] = $response['id'];
                 $data['one_step'] = Configuration::get('PS_ORDER_PROCESS_TYPE');
                 $data['valid_user'] = true;

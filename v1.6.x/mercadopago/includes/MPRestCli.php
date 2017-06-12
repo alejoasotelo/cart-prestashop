@@ -179,6 +179,11 @@ class MPRestCli
         return self::exec('POST', $uri, $data, $content_type, self::API_BASE_URL);
     }
 
+    public static function delete($uri, $data, $content_type = 'application/json')
+    {
+        return self::exec('DELETE', $uri, $data, $content_type, self::API_BASE_URL);
+    }
+
     public static function postTracking($uri, $data, $trackingID, $content_type = 'application/json')
     {
         return self::execTracking('POST', $uri, $data, $content_type, $trackingID);
