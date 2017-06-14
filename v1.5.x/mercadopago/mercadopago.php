@@ -2341,10 +2341,10 @@ class MercadoPago extends PaymentModule
         }
 
         if ($checkout == 'standard' && $topic == 'merchant_order' && $id > 0) {
-            $result = $this->mercadopago->getMerchantOrder($id);
+                $result = $this->mercadopago->getMerchantOrder($id);
             error_log("====checkout=====".$checkout);
 
-            $merchant_order_info = $result['response'];
+                $merchant_order_info = $result['response'];
 
             // check value
             $cart = new Cart($merchant_order_info['external_reference']);
@@ -2359,7 +2359,7 @@ class MercadoPago extends PaymentModule
 
             // check the module
             $id_order = $this->getOrderByCartId($merchant_order_info['external_reference']);
-                $order = new Order($id_order);
+            $order = new Order($id_order);
             $total_amount = $merchant_order_info['total_amount'];
 
             if (Configuration::get('MERCADOPAGO_LOG') == 'true') {
@@ -2383,8 +2383,8 @@ class MercadoPago extends PaymentModule
                 UtilMercadoPago::logMensagem('MercadoPago :: listenIPN - No actualizó el pedido, valores diferentes'.
                 ' id = '.$id, MPApi::INFO);
                 error_log('MercadoPago :: listenIPN - No actualizó el pedido, valores diferentes');
-                    return;
-                }
+                return;
+            }
             $status_shipment = null;
             if (isset($merchant_order_info['shipments'][0]) &&
                 $merchant_order_info['shipments'][0]['shipping_mode'] == 'me2') {
@@ -2435,15 +2435,15 @@ class MercadoPago extends PaymentModule
                 $transaction_amounts += $payment_info['transaction_amount'];
                 if ($payment_info['payment_type'] == 'credit_card') {
                     $payment_method_ids[] = isset($payment_info['payment_method_id']) ?
-                                            $payment_info['payment_method_id'] : '';
+                    $payment_info['payment_method_id'] : '';
                     $credit_cards[] = isset($payment_info['card']['last_four_digits']) ?
-                                            '**** **** **** '.$payment_info['card']['last_four_digits'] : '';
+                    '**** **** **** '.$payment_info['card']['last_four_digits'] : '';
                     $cardholders[] = isset($payment_info['card']['cardholder']['name']) ?
                     $payment_info['card']['cardholder']['name'] : '';
 
-                if (Configuration::get('MERCADOPAGO_LOG') == 'true') {
-                    $msg = 'MercadoPago::listenIPN()::$id = '.$id.', carrito: '.$external_reference.', Payments ('.$payment_info['id'].'): '.$payment_info['status'].', type: '.$payment_info['payment_type'].', amount: '.$payment_info['transaction_amount'];
-                    UtilMercadoPago::logMensagem($msg, $id);
+                    if (Configuration::get('MERCADOPAGO_LOG') == 'true') {
+                        $msg = 'MercadoPago::listenIPN()::$id = '.$id.', carrito: '.$external_reference.', Payments ('.$payment_info['id'].'): '.$payment_info['status'].', type: '.$payment_info['payment_type'].', amount: '.$payment_info['transaction_amount'];
+                        UtilMercadoPago::logMensagem($msg, $id);
                     }
                 }
             }
@@ -2471,7 +2471,7 @@ class MercadoPago extends PaymentModule
                 if (Configuration::get('MERCADOPAGO_LOG') == 'true') {
                     $msg = 'MercadoPago::listenIPN()::$id = '.$id.', carrito: '.$external_reference.', Amount diferentes: ' . $merchant_order_info['total_amount'].' == '.$transaction_amounts .', Payments count: '.count($payments);
                     UtilMercadoPago::logMensagem($msg, $id);
-                }
+            }
             }
         } elseif (($checkout == 'custom' || $checkout == 'pos') && $topic == 'payment' && $id > 0) {
             $result = $this->mercadopago->getPayment($id);
@@ -2623,10 +2623,10 @@ class MercadoPago extends PaymentModule
                         $id_order,
                         Configuration::get($order_status)
                     );
-                        if ($existStates) {
-                            return;
-                        }
+                    if ($existStates) {
+                        return;
                     }
+                }
                 // If order wasn't created yet and payment is approved or pending or in_process, create it.
                 // This can happen when user closes checkout standard
                 if (empty($id_order) && ($payment_status == 'in_process' || $payment_status == 'approved' ||
@@ -2648,24 +2648,24 @@ class MercadoPago extends PaymentModule
                     );
                     $id_order = !$id_order ? $this->getOrderByCartId($id_cart) : $id_order;
                     $order = new Order($id_order);
-                        $existStates = $this->checkStateExist($id_order, Configuration::get($order_status));
-                        if ($existStates) {
-                            return;
-                        }
+                    $existStates = $this->checkStateExist($id_order, Configuration::get($order_status));
+                    if ($existStates) {
+                        return;
+                    }
 
                     $displayName = $this->setNamePaymentType($payment_type);
 
                     $this->validateOrder(
-                            $id_cart,
-                            Configuration::get($order_status),
-                            $total,
-                            $displayName,
-                            null,
-                            $extra_vars,
-                            $cart->id_currency,
-                            false,
-                            $cart->secure_key
-                        );
+                        $id_cart,
+                        Configuration::get($order_status),
+                        $total,
+                        $displayName,
+                        null,
+                        $extra_vars,
+                        $cart->id_currency,
+                        false,
+                        $cart->secure_key
+                    );
                 } elseif (!empty($order) && $order->current_state != null &&
                      $order->current_state != Configuration::get($order_status)) {
                     $id_order = !$id_order ? $this->getOrderByCartId($id_cart) : $id_order;
