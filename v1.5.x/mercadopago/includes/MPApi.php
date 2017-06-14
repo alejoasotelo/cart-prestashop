@@ -288,10 +288,9 @@ class MPApi
         $access_token = $this->getAccessToken();
         $result = MPRestCli::get('/v1/payment_methods?access_token=' . $access_token);
         if ($result['status'] != "200") {
-            PrestaShopLogger::addLog(
+            UtilMercadoPago::logMensagem(
                 'MercadoPago::getContent - Fatal Error: '.Tools::jsonEncode($result),
-                MPApi::WARNING,
-                0
+                MPApi::WARNING
             );
             return array();
         }

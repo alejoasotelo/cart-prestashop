@@ -17,7 +17,7 @@
 * versions in the future. If you wish to customize PrestaShop for your
 * needs please refer to http://www.prestashop.com for more information.
 *
-*  @author    ricardobrito
+*  @author    MercadoPago
 *  @copyright Copyright (c) MercadoPago [http://www.mercadopago.com]
 *  @license   http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
 *  International Registered Trademark & Property of MercadoPago
@@ -123,9 +123,9 @@
 	}
 
 	.mp-module .payment-label {
-		font: bolder 20px/24px "Open Sans", sans-serif;
+		font: bolder 16px/18px "Open Sans", sans-serif;
 		color: #333333;
-		margin-left: 28px;
+		margin-left: 15px;
 	}
 
 	.mp-module .col {
@@ -212,7 +212,7 @@
 	}
 
 	.mp-module .standard {
-		font: 600 13px/15px "Open Sans", sans-serif;
+		font: 600 13px/16px "Open Sans", sans-serif;
 		margin-left: 174px;
 		display: block;
 	}
