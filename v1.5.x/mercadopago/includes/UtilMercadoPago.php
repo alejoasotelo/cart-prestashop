@@ -34,18 +34,18 @@ class UtilMercadoPago
             PrestaShopLogger::addLog(
                 $mensagem,
                 1,
-                null,
-                null,
                 $nivel,
+                null,
+                null,
                 true
             );
         } else if ($version == 5) {
             Logger::addLog(
                 $mensagem,
                 1,
-                null,
-                null,
                 $nivel,
+                null,
+                null,
                 true
             );
 
@@ -97,7 +97,7 @@ class UtilMercadoPago
             'version' => '',
             'curl' => '',
             'ssl' => ''
-            );
+        );
 
         $version = str_replace('.', '', phpversion());
 
@@ -114,8 +114,8 @@ class UtilMercadoPago
         }
 
         $sql = "SELECT id_product
-        FROM "._DB_PREFIX_."product
-        WHERE width = 0 OR height = 0 OR depth = 0 OR weight = 0";
+                FROM "._DB_PREFIX_."product
+                WHERE width = 0 OR height = 0 OR depth = 0 OR weight = 0";
 
         $dados = Db::getInstance()->executeS($sql);
 
@@ -130,4 +130,29 @@ class UtilMercadoPago
         return $requirements;
     }
 
+    public static function checkValueNull($value)
+    {
+        if (is_null($value) || empty($value)) {
+            return "false";
+        }
+        return $value;
+    }
+
+    public static function getString($value)
+    {
+        if (is_null($value) || empty($value)) {
+            return "";
+        }
+        return $value;
+    }
+
+    public static function getOrderTotalMLC_MCO($value)
+    {
+        error_log("entrou no util");
+        if (is_null($value) || empty($value)) {
+            error_log("=== entrou no if  util====" . $value);
+            return 0;
+        }
+        return strpos($value,".") ? (double)substr($value, 0, strpos($value,".")) : $value;
+    }
 }

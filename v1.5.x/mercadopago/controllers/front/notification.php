@@ -38,13 +38,14 @@ class MercadoPagoNotificationModuleFrontController extends ModuleFrontController
 
     public function displayAjax()
     {
+
         if (Configuration::get('MERCADOPAGO_LOG') == 'true') {
             UtilMercadoPago::logMensagem(
                 'MercadoPagoNotification::displayAjax()::topic = ' . Tools::getValue('topic') . ', id = ' . Tools::getValue('id') . ', checkout = ' . Tools::getValue('checkout'),
                 MPApi::INFO
             );
         }
-        
+
         if (Tools::getValue('checkout') && Tools::getValue('data_id') || Tools::getValue('id')) {
             $mercadopago = $this->module;
             if (Tools::getValue('checkout') == "custom") {
@@ -54,7 +55,14 @@ class MercadoPagoNotificationModuleFrontController extends ModuleFrontController
                     Tools::getValue('data_id')
                 );
             } else {
-                $mercadopago->listenIPN(Tools::getValue('checkout'), Tools::getValue('topic'), Tools::getValue('id'));
+                error_log("retorno ipn === ".Tools::getValue('checkout'));
+                error_log("retorno ipn === ".Tools::getValue('id'));
+                error_log(print_r($_GET, true));
+                $mercadopago->listenIPN(
+                    Tools::getValue('checkout'),
+                    Tools::getValue('topic'),
+                    Tools::getValue('id')
+                );
             }
         }
     }

@@ -8,7 +8,7 @@ license@prestashop.com so we can send you a copy immediately. * *
 DISCLAIMER * * Do not edit or add to this file if you wish to upgrade
 PrestaShop to newer * versions in the future. If you wish to customize
 PrestaShop for your * needs please refer to http://www.prestashop.com
-for more information. * * @author ricardobrito * @copyright Copyright
+for more information. * * @author MercadoPago * @copyright Copyright
 (c) MercadoPago [http://www.mercadopago.com] * @license
 http://opensource.org/licenses/osl-3.0.php Open Software License (OSL
 3.0) * International Registered Trademark & Property of MercadoPago *}
@@ -43,23 +43,10 @@ http://opensource.org/licenses/osl-3.0.php Open Software License (OSL
 	</div>
 </div>
 
-<script>
-	while($("#plugin") == "undefined") {
-		console.info("carregando");
-	}
-	/*while($("#plugin") == "undefined") {
-		console.info("carregando");
-	}
-	console.info("finalizado");
-	window.onload = init();
-	function init(){
-		 document.getElementById("boletoframe").addEventListener("load", function(){
-			 console.log('load');
-		}, complete());
-		
-	}
-	
-	function complete() {
-		console.info("teste");
-	}*/
+<script type="text/javascript">
+  ModuleAnalytics.setPublicKey("TEST-a603f517-310f-4956-a00d-93519fc17647")
+  ModuleAnalytics.setPaymentId("123456")
+  ModuleAnalytics.setPaymentType("credit_card")
+  ModuleAnalytics.setCheckoutType("basic")
+  ModuleAnalytics.put()
 </script>
