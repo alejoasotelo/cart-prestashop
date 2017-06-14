@@ -85,6 +85,7 @@ class MercadoPago extends PaymentModule
             ),
         ),
     );
+
     public function __construct()
     {
         $this->name = 'mercadopago';
@@ -2341,10 +2342,10 @@ class MercadoPago extends PaymentModule
         }
 
         if ($checkout == 'standard' && $topic == 'merchant_order' && $id > 0) {
-                $result = $this->mercadopago->getMerchantOrder($id);
+            $result = $this->mercadopago->getMerchantOrder($id);
             error_log("====checkout=====".$checkout);
 
-                $merchant_order_info = $result['response'];
+            $merchant_order_info = $result['response'];
 
             // check value
             $cart = new Cart($merchant_order_info['external_reference']);
@@ -2365,11 +2366,12 @@ class MercadoPago extends PaymentModule
             if (Configuration::get('MERCADOPAGO_LOG') == 'true') {
 
                 if ($id_order != false) {
-                    $order = new Order($id_order);
                     UtilMercadoPago::logMensagem('MercadoPago::listenIPN()::$id = '.$id.', module = '.$order->module.', external_reference = '.$merchant_order_info['external_reference'].', id_order = '.$order->id, $id);
                 } else {
                     UtilMercadoPago::logMensagem('MercadoPago::listenIPN()::$id = '.$id.', module = , external_reference = '.$merchant_order_info['external_reference'].', id_order = no existe', $id);
                 }
+
+            }
             $currency = new Currency((int) $cart->id_currency);
             error_log("valor formatado ====". Tools::displayPrice($cart->getOrderTotal(true), $currency));
 
