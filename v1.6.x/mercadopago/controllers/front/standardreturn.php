@@ -124,7 +124,7 @@ class MercadoPagoStandardReturnModuleFrontController extends ModuleFrontControll
                     error_log("id_currency getTotalCart ====".Cart::getTotalCart($cart->id));
 
                     if ($total != $total_ordem) {
-                        PrestaShopLogger::addLog('Não atualizou o pedido, valores diferentes'.
+                        PrestaShopLogger::addLog('No actualizo el pedido, valores diferentes'.
                         ' merchant_order_id = '.$merchant_order_id, MPApi::INFO, 0);
                         error_log("Não atualizou o pedido, valores diferentes'.
                         ' merchant_order_id = ".$merchant_order_id);
