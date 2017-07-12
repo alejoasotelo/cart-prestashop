@@ -3348,12 +3348,15 @@ class MercadoPago extends PaymentModule
 
     public function insertMercadoPagoOrder($cart_id, $order_id, $valid, $ipn_status)
     {
-        $insertOrder = 'INSERT INTO ' .
-        _DB_PREFIX_ . 'mercadopago_orders (cart_id, order_id, create_date, valid, ipn_status) VALUES(' .
-        $cart_id . ','   . $order_id. ',\'' . pSql(date('Y-m-d h:i:s')) . '\','.$valid.',\''.$ipn_status.'\')';
-        $returnInsert = Db::getInstance(_PS_USE_SQL_SLAVE_)->Execute($insertOrder);
+        UtilMercadoPago::logMensagem("insertMercadoPagoOrder::cart_id: ". $cart_id. ', id_order: '. $order_id . ', $valid: '. $valid .', $ipn_status: ' . $ipn_status, MPApi::ERROR);
 
-        return $returnInsert;
+        return Db::getInstance()->insert('mercadopago_orders', array(
+            'cart_id'       => (int)$cart_id,
+            'order_id'      => (int)$order_id,
+            'create_date'   => pSql(date('Y-m-d h:i:s')),
+            'valid'         => $valid,
+            'ipn_status'      => $ipn_status
+        ));
     }
 
     public function setNamePaymentType($payment_type_id)
