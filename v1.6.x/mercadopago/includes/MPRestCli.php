@@ -155,7 +155,6 @@ class MPRestCli
             throw new Exception($error);
         } else {
             if ($response['status'] > 202 && self::$check_loop == 0) {
-
                 self::$check_loop = 1;
 
                 if (isset($response['response'])) {

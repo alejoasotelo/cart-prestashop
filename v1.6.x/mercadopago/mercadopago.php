@@ -506,7 +506,7 @@ class MercadoPago extends PaymentModule
             $order_payments = $order->getOrderPayments();
             foreach ($order_payments as $order_payment) {
                 $result = $this->mercadopago->getPayment($order_payment->transaction_id);
-                if ($result['status'] == '404' || $result['status'] == '401' ) {
+                if ($result['status'] == '404' || $result['status'] == '401') {
                     $result = $this->mercadopago->getPaymentStandard($order_payment->transaction_id);
 
                     $result_merchant = $this->mercadopago->getMerchantOrder(
@@ -871,7 +871,7 @@ class MercadoPago extends PaymentModule
                     Configuration::updateValue('MERCADOPAGO_CLIENT_SECRET', $client_secret);
                     Configuration::updateValue('MERCADOPAGO_COUNTRY', $this->getCountry($client_id, $client_secret));
                     $success = true;
-                        Configuration::updateValue('MERCADOPAGO_PUBLIC_KEY', $public_key);
+                    Configuration::updateValue('MERCADOPAGO_PUBLIC_KEY', $public_key);
                     Configuration::updateValue('MERCADOPAGO_ACCESS_TOKEN', $access_token);
                     if ($mercadoenvios_activate == 'true' &&
                         count(Tools::jsonDecode(Configuration::get('MERCADOPAGO_CARRIER'))) == 0) {
@@ -1075,8 +1075,8 @@ class MercadoPago extends PaymentModule
 
         $configCard = $this->mercadopago->getCheckConfigCard();
         if (!isset($configCard['response']['status'])) {
-        $two_cards = $configCard['response']['two_cards'];
-        Configuration::updateValue('MERCADOPAGO_TWO_CARDS', $two_cards);
+            $two_cards = $configCard['response']['two_cards'];
+            Configuration::updateValue('MERCADOPAGO_TWO_CARDS', $two_cards);
         }
 
         $notification_url = $this->link->getModuleLink(
@@ -1490,7 +1490,7 @@ class MercadoPago extends PaymentModule
         $resultModules = array();
 
         foreach ($query as $result) {
-            array_push( $resultModules, $result['name']);
+            array_push($resultModules, $result['name']);
         }
 
         $return = array(
@@ -2277,15 +2277,15 @@ class MercadoPago extends PaymentModule
     private function saveCard($result)
     {
         if (isset($result['response']['metadata'])) {
-        $token = $result['response']['metadata']['card_token_id'];
+            $token = $result['response']['metadata']['card_token_id'];
             $customerID = $result['response']['metadata']['customer_id'];
 
-        $tokenPagamentoJson = array(
-            'token' => $token,
-        );
-        $result_response = $this->mercadopago->addCustomerCard($tokenPagamentoJson, $customerID);
-        return $result_response;
-    }
+            $tokenPagamentoJson = array(
+                'token' => $token,
+            );
+            $result_response = $this->mercadopago->addCustomerCard($tokenPagamentoJson, $customerID);
+            return $result_response;
+        }
         return null;
     }
 
@@ -2307,8 +2307,8 @@ class MercadoPago extends PaymentModule
         }
 
         if ($checkout == 'standard' && $topic == 'merchant_order' && $id > 0) {
-                $result = $this->mercadopago->getMerchantOrder($id);
-                $merchant_order_info = $result['response'];
+            $result = $this->mercadopago->getMerchantOrder($id);
+            $merchant_order_info = $result['response'];
             // check value
             $cart = new Cart($merchant_order_info['external_reference']);
 
@@ -2563,17 +2563,17 @@ class MercadoPago extends PaymentModule
                         ) {
                         $this->insertMercadoPagoOrder($id_cart, 0, 0, $payment_status);
                         error_log("======VALIDAR validateOrder======");
-                    $this->validateOrder(
-                        $id_cart,
-                        Configuration::get($order_status),
-                        $total,
-                        $displayName,
-                        null,
-                        $extra_vars,
-                        $cart->id_currency,
-                        false,
+                        $this->validateOrder(
+                            $id_cart,
+                            Configuration::get($order_status),
+                            $total,
+                            $displayName,
+                            null,
+                            $extra_vars,
+                            $cart->id_currency,
+                            false,
                             $customer->secure_key
-                    );
+                        );
                         $this->insertMercadoPagoOrder($id_cart, $this->currentOrder, 1, $payment_status);
                         error_log("===currentOrder====".$this->currentOrder);
 
@@ -2851,7 +2851,7 @@ class MercadoPago extends PaymentModule
             for ($qty = 0; $qty < $product['quantity']; ++$qty) {
                 if ($product['width'] == 0) {
                     if (Configuration::get('MERCADOPAGO_LOG') == 'true') {
-                    $error = 'Invalid dimensions cart [width].';
+                        $error = 'Invalid dimensions cart [width].';
                         UtilMercadoPago::logMensagem("=====dimensions=====".
                         $error, MPApi::ERROR);
                     }
@@ -3329,15 +3329,35 @@ class MercadoPago extends PaymentModule
             } catch (Exception $e) {
                 if (Configuration::get('MERCADOPAGO_LOG') == 'true') {
                     UtilMercadoPago::logMensagem("=====settings=====".$e->getMessage(), MPApi::ERROR);
+                }
+            }
         }
-        }
-        }
-        }
+    }
+
+    public function selectMercadoPagoOrder($cart_id)
+    {
+        $sql = 'SELECT MAX(mercadopago_orders_id) as mercadopago_orders_id FROM `' .
+        _DB_PREFIX_ . 'mercadopago_orders` WHERE `cart_id` = ' . (int) $cart_id;
+        error_log("====sql selectMercadoPagoOrder=====" . $sql);
+
+        $result = Db::getInstance(_PS_USE_SQL_SLAVE_)->getRow(
+            $sql
+        );
+        return isset($result['mercadopago_orders_id']) ? $result['mercadopago_orders_id'] : false;;
+    }
+
+    public function insertMercadoPagoOrder($cart_id, $order_id, $valid, $ipn_status)
+    {
+        $insertOrder = 'INSERT INTO ' .
+        _DB_PREFIX_ . 'mercadopago_orders (cart_id, order_id, create_date, valid, ipn_status) VALUES(' .
+        $cart_id . ','   . $order_id. ',\'' . pSql(date('Y-m-d h:i:s')) . '\','.$valid.',\''.$ipn_status.'\')';
+        $returnInsert = Db::getInstance(_PS_USE_SQL_SLAVE_)->Execute($insertOrder);
+
+        return $returnInsert;
+    }
 
     public function setNamePaymentType($payment_type_id)
     {
-
-        error_log("===$payment_type_id=====".$payment_type_id);
         if ($payment_type_id == "ticket") {
             $displayName = $this->l('Mercado Pago - Ticket');
         } elseif ($payment_type_id == "atm") {
