@@ -3395,7 +3395,7 @@ class MercadoPago extends PaymentModule
         return Db::getInstance()->insert('mercadopago_orders', array(
             'cart_id'       => (int)$cart_id,
             'order_id'      => (int)$order_id,
-            'create_date'   => pSql(date('Y-m-d h:i:s')),
+            'added'   => date('Y-m-d h:i:s'),
             'valid'         => $valid,
             'ipn_status'      => $ipn_status
         ));
