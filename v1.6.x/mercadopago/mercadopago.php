@@ -2473,6 +2473,23 @@ class MercadoPago extends PaymentModule
         $checkout
     ) {
         $order = null;
+
+
+        if (Configuration::get('MERCADOPAGO_LOG') == 'true') {
+            UtilMercadoPago::logMensagem('MercadoPago::updateOrder()::'.
+            '$payment_ids = '.print_r($payment_ids, true) .
+            '$payment_statuses = '.print_r($payment_statuses, true) .
+            '$payment_method_ids = '.print_r($payment_method_ids, true) .
+            '$payment_types = '.print_r($payment_types, true) .
+            '$credit_cards = '.print_r($credit_cards, true) .
+            '$cardholders = '.print_r($cardholders, true) .
+            '$transaction_amounts = '.print_r($transaction_amounts, true) .
+            '$external_reference = '.$external_reference.
+            '$result = '.$result.
+            '$checkout = '.$checkout, 1
+            );
+        }
+
         // if has two creditcard validate whether payment has same status in order to continue validating order
         if (count($payment_statuses) == 1 ||
              (count($payment_statuses) == 2 && $payment_statuses[0] == $payment_statuses[1])) {
@@ -2539,6 +2556,11 @@ class MercadoPago extends PaymentModule
                 if (empty($id_order) && ($payment_status == 'in_process' || $payment_status == 'approved' ||
                     $payment_status == 'pending')
                     ) {
+
+                    if (Configuration::get('MERCADOPAGO_LOG') == 'true') {
+                        UtilMercadoPago::logMensagem('MercadoPago::updateOrder()::empty($id_order) && payment_status = ('.$payment_status.')', 1);
+                    }
+
                     $cart = new Cart($id_cart);
                     $customer = new Customer($cart->id_customer);
                     $total = (double) number_format($transaction_amounts, 2, '.', '');
@@ -2551,6 +2573,11 @@ class MercadoPago extends PaymentModule
                     error_log("====id_order====".$id_order);
                     $order = new Order($id_order);
                     $existStates = $this->checkStateExist($id_order, Configuration::get($order_status));
+
+                    if (Configuration::get('MERCADOPAGO_LOG') == 'true') {
+                        UtilMercadoPago::logMensagem('MercadoPago::updateOrder()::checkStateExist($id_order, '.Configuration::get($order_status).') = ' . $existStates, 1);
+                    }
+
                     if ($existStates) {
                         return;
                     }
@@ -2609,6 +2636,11 @@ class MercadoPago extends PaymentModule
                         case 'cancelled':
                         case 'refunded':
                         case 'rejected':
+
+                            if (Configuration::get('MERCADOPAGO_LOG') == 'true') {
+                                UtilMercadoPago::logMensagem('MercadoPago::updateOrder():: se cancelo el pedido: '. $id_order, 1);
+                            }
+
                             $this->updateOrderHistory($id_order, Configuration::get('PS_OS_CANCELED'), false);
                             break;
                     }
@@ -2677,14 +2709,23 @@ class MercadoPago extends PaymentModule
 
     public function updateOrderHistory($id_order, $status, $mail = true)
     {
+        if (Configuration::get('MERCADOPAGO_LOG') == 'true') {
+            UtilMercadoPago::logMensagem('MercadoPago::updateOrderHistory()::id_order: '. $id_order . ', $status: '. $status . ', $mail: ' . $mail, 1);
+        }
+
         $existStates = $this->checkStateExist($id_order, $status);
+
+        if (Configuration::get('MERCADOPAGO_LOG') == 'true') {
+            UtilMercadoPago::logMensagem('MercadoPago::updateOrderHistory()::checkStateExist('. $id_order . ', '. $status . ') = ' . $existStates, 1);
+        }
+
         if ($existStates) {
             return;
         }
         // Change order state and send email
         $history = new OrderHistory();
-        $history->id_order = (integer) $id_order;
-        $history->changeIdOrderState((integer) $status, (integer) $id_order, true);
+        $history->id_order = (int) $id_order;
+        $history->changeIdOrderState((int) $status, (int) $id_order, true);
         if ($mail) {
             $extra_vars = array();
             $history->addWithemail(true, $extra_vars);
@@ -3336,9 +3377,10 @@ class MercadoPago extends PaymentModule
 
     public function selectMercadoPagoOrder($cart_id)
     {
+        UtilMercadoPago::logMensagem("selectMercadoPagoOrder::cart_id: ". $cart_id, MPApi::ERROR);
+
         $sql = 'SELECT MAX(mercadopago_orders_id) as mercadopago_orders_id FROM `' .
         _DB_PREFIX_ . 'mercadopago_orders` WHERE `cart_id` = ' . (int) $cart_id;
-        error_log("====sql selectMercadoPagoOrder=====" . $sql);
 
         $result = Db::getInstance(_PS_USE_SQL_SLAVE_)->getRow(
             $sql
