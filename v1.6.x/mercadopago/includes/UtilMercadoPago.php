@@ -54,24 +54,6 @@ class UtilMercadoPago
         }
     }
 
-    public static function setNamePaymentType($payment_type_id)
-    {
-        if ($payment_type_id == "ticket") {
-            $displayName = "Mercado Pago - ticket";
-        } elseif ($payment_type_id == "atm") {
-            $displayName = "Mercado Pago - ATM";
-        } elseif ($payment_type_id == "credit_card") {
-            $displayName = "Mercado Pago - Credit card";
-        } elseif ($payment_type_id == "debit_card") {
-            $displayName = "Mercado Pago - Debit card";
-        } elseif ($payment_type_id == "prepaid_card") {
-            $displayName = "Mercado Pago - Prepaid card";
-        } else {
-            $displayName = "Mercado Pago";
-        }
-        return $displayName;
-    }
-
     public static function getPrestashopVersion()
     {
         if (version_compare(_PS_VERSION_, '1.7.0.0', '>=')) {
@@ -113,16 +95,22 @@ class UtilMercadoPago
             $requirements['curl'] = 'positive';
         }
 
-        $sql = "SELECT id_product
-                FROM "._DB_PREFIX_."product
-                WHERE width = 0 OR height = 0 OR depth = 0 OR weight = 0";
+        if (Configuration::get('MERCADOENVIOS_ACTIVATE') == 'true') {
+            error_log("Mercado envios ativado");
+            $sql = "SELECT id_product
+            FROM "._DB_PREFIX_."product WHERE (width = 0 OR height = 0
+            OR depth = 0
+            OR weight = 0)
+            AND online_only = 0
+            AND available_for_order = 1
+            AND active =1;";
 
-        $dados = Db::getInstance()->executeS($sql);
-
-        if ($dados) {
-            $requirements['dimensoes'] = 'negative';
-        } else {
-            $requirements['dimensoes'] = 'positive';
+            $dados = Db::getInstance()->executeS($sql);
+            if ($dados) {
+                $requirements['dimensoes'] = 'negative';
+            } else {
+                $requirements['dimensoes'] = 'positive';
+            }
         }
 
         $requirements['ssl'] = Configuration::get('PS_SSL_ENABLED') == 0 ? "negative" : "positive";
@@ -146,13 +134,26 @@ class UtilMercadoPago
         return $value;
     }
 
-    public static function getOrderTotalMLC_MCO($value)
+    public static function getOrderTotalWithoutDecimals($value)
     {
-        error_log("entrou no util");
         if (is_null($value) || empty($value)) {
-            error_log("=== entrou no if  util====" . $value);
             return 0;
         }
-        return strpos($value,".") ? (double)substr($value, 0, strpos($value,".")) : $value;
+        return strpos($value, ".") ? (double)Tools::substr($value, 0, strpos($value, ".")) : $value;
+    }
+
+
+    public static function getCodigoPostal($value)
+    {
+        if (is_null($value) || empty($value)) {
+            return $value;
+        }
+        if (Configuration::get('MERCADOPAGO_COUNTRY') == 'MLB') {
+            $value = str_replace('-', '', $value);
+        } elseif (Configuration::get('MERCADOPAGO_COUNTRY') == 'MLA') {
+            error_log('==postcode===' . preg_replace("/[^0-9,.]/", "", $value));
+            $value = preg_replace("/[^0-9,.]/", "", $value);
+        }
+        return $value;
     }
 }
