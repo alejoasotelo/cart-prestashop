@@ -40,12 +40,10 @@ class MercadoPagoCancelOrderModuleFrontController extends ModuleFrontController
         $mercadopago_sdk = $mercadopago->mercadopago;
         $responseCancel = null;
         $token = Tools::getAdminToken('AdminOrder'.Tools::getValue('id_order'));
-
         $token_form = Tools::getValue('token_form');
 
         error_log("id order =-==" . Tools::getValue('id_order'));
         error_log("token_form =-==" . Tools::getValue('token_form'));
-
         //check token
         if ($token == $token_form) {
             $order = new Order(Tools::getValue("id_order"));
@@ -66,10 +64,9 @@ class MercadoPagoCancelOrderModuleFrontController extends ModuleFrontController
                 }
                 break;
             }
-            error_log("====retorno=====" . Tools::jsonEncode($responseCancel));
             if ($responseCancel != null && $responseCancel['status'] == 200) {
-                $return = $mercadopago->updateOrderHistory($order->id, Configuration::get('PS_OS_CANCELED'));
                 error_log("====retorno=====" . Tools::jsonEncode($return));
+                $mercadopago->updateOrderHistory($order->id, Configuration::get('PS_OS_CANCELED'));
                 $response = array(
                     'status' => '200',
                     'message' => $this->module->l('The payment was cancelled.')
@@ -80,13 +77,11 @@ class MercadoPagoCancelOrderModuleFrontController extends ModuleFrontController
                     'message' => $this->module->l('Cannnot cancel the payment, please see the PrestaShop Log.')
                 );
                 UtilMercadoPago::logMensagem(
-                'Cannnot cancel the payment = ' . Tools::jsonEncode($responseCancel), MPApi::WARNING
+                    'Cannnot cancel the payment = ' .
+                    Tools::jsonEncode($responseCancel),
+                    MPApi::WARNING
                 );
             }
-
-
-            error_log("retorno web === = = ". Tools::jsonEncode($response));
-
         }
 
         header('Content-Type: application/json');
