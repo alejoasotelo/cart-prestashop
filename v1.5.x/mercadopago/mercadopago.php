@@ -2583,7 +2583,7 @@ class MercadoPago extends PaymentModule
                     $existStates = $this->checkStateExist($id_order, Configuration::get($order_status));
 
                     if (Configuration::get('MERCADOPAGO_LOG') == 'true') {
-                        UtilMercadoPago::logMensagem('MercadoPago::updateOrder()::checkStateExist(id_order: '.$id_order.', '.Configuration::get($order_status).') = ' . $existStates, 1);
+                        UtilMercadoPago::logMensagem('MercadoPago::updateOrder()::checkStateExist(id_order: '.print_r($id_order, true).', '.Configuration::get($order_status).') = ' . $existStates, 1);
                     }
 
                     if ($existStates) {
