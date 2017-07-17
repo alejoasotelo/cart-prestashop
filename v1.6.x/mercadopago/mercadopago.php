@@ -2649,7 +2649,7 @@ class MercadoPago extends PaymentModule
                 if ($order) {
                     error_log("OBJETO ORDER ESTA INSTANCIADO");
                     // update order payment information
-                    $order_payments = $order->getOrderPayments();
+                    /*$order_payments = $order->getOrderPayments();
                     error_log(print_r($order_payments));
                     foreach ($order_payments as $order_payment) {
                         $order_payment->transaction_id = implode(' / ', $payment_ids);
@@ -2660,7 +2660,7 @@ class MercadoPago extends PaymentModule
                         }
                         error_log("OBJETO ORDER ESTA INSTANCIADO ==== save()=====");
                         $order_payment->save();
-                    }
+                    }*/
                 } else {
                     error_log("OBJETO ORDER ESTA NULO");
                 }
