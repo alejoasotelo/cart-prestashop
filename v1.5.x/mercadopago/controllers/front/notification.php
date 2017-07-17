@@ -25,6 +25,7 @@
  */
 
 include_once dirname(__FILE__) . '/../../mercadopago.php';
+include_once dirname(__FILE__) . '/../../includes/MPApi.php';
 
 class MercadoPagoNotificationModuleFrontController extends ModuleFrontController
 {
@@ -37,10 +38,12 @@ class MercadoPagoNotificationModuleFrontController extends ModuleFrontController
 
     public function displayAjax()
     {
+
         if (Configuration::get('MERCADOPAGO_LOG') == 'true') {
-             UtilMercadoPago::logMensagem('Debug Mode :: displayAjax - topic = ' . Tools::getValue('topic'), MP_SDK::INFO);
-             UtilMercadoPago::logMensagem('Debug Mode :: displayAjax - id = ' . Tools::getValue('id'), MP_SDK::INFO);
-             UtilMercadoPago::logMensagem('Debug Mode :: displayAjax - checkout = ' . Tools::getValue('checkout'), MP_SDK::INFO);
+            UtilMercadoPago::logMensagem(
+                'MercadoPagoNotification::displayAjax()::topic = ' . Tools::getValue('topic') . ', id = ' . Tools::getValue('id') . ', checkout = ' . Tools::getValue('checkout'),
+                MPApi::INFO
+            );
         }
 
         if (Tools::getValue('checkout') && Tools::getValue('data_id') || Tools::getValue('id')) {
@@ -52,7 +55,14 @@ class MercadoPagoNotificationModuleFrontController extends ModuleFrontController
                     Tools::getValue('data_id')
                 );
             } else {
-                $mercadopago->listenIPN(Tools::getValue('checkout'), Tools::getValue('topic'), Tools::getValue('id'));
+                error_log("retorno ipn === ".Tools::getValue('checkout'));
+                error_log("retorno ipn === ".Tools::getValue('id'));
+                error_log(print_r($_GET, true));
+                $mercadopago->listenIPN(
+                    Tools::getValue('checkout'),
+                    Tools::getValue('topic'),
+                    Tools::getValue('id')
+                );
             }
         }
     }

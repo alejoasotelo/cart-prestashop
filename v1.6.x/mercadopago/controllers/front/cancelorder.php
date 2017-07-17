@@ -25,7 +25,6 @@
  */
 
 include_once dirname(__FILE__) . '/../../includes/MPApi.php';
-
 class MercadoPagoCancelOrderModuleFrontController extends ModuleFrontController
 {
     public function initContent()
@@ -39,13 +38,14 @@ class MercadoPagoCancelOrderModuleFrontController extends ModuleFrontController
         // card_token_id
         $mercadopago = $this->module;
         $mercadopago_sdk = $mercadopago->mercadopago;
-
+        $responseCancel = null;
         $token = Tools::getAdminToken('AdminOrder'.Tools::getValue('id_order'));
-
         $token_form = Tools::getValue('token_form');
+
+        error_log("id order =-==" . Tools::getValue('id_order'));
+        error_log("token_form =-==" . Tools::getValue('token_form'));
         //check token
         if ($token == $token_form) {
-
             $order = new Order(Tools::getValue("id_order"));
             $order_payments =  $order->getOrderPayments();
             foreach ($order_payments as $order_payment) {
@@ -64,16 +64,28 @@ class MercadoPagoCancelOrderModuleFrontController extends ModuleFrontController
                 }
                 break;
             }
-
-            $url = (Configuration::get('PS_SSL_ENABLED') ? 'https://' : 'http://') .
-                                         htmlspecialchars($_SERVER['HTTP_HOST'], ENT_COMPAT, 'UTF-8') . __PS_BASE_URI__;
-
             if ($responseCancel != null && $responseCancel['status'] == 200) {
+                error_log("====retorno=====" . Tools::jsonEncode($return));
                 $mercadopago->updateOrderHistory($order->id, Configuration::get('PS_OS_CANCELED'));
+                $response = array(
+                    'status' => '200',
+                    'message' => $this->module->l('The payment was cancelled.')
+                );
+            } else {
+                $response = array(
+                    'status' => '404',
+                    'message' => $this->module->l('Cannnot cancel the payment, please see the PrestaShop Log.')
+                );
+                UtilMercadoPago::logMensagem(
+                    'Cannnot cancel the payment = ' .
+                    Tools::jsonEncode($responseCancel),
+                    MPApi::WARNING
+                );
             }
-
-            $redirect = $this->context->link->getAdminLink('AdminOrders');
-            Tools::redirectAdmin($redirect);
         }
+
+        header('Content-Type: application/json');
+        echo Tools::jsonEncode($response);
+        exit;
     }
 }
