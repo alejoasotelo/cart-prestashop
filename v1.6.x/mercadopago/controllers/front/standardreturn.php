@@ -176,7 +176,13 @@ class MercadoPagoStandardReturnModuleFrontController extends ModuleFrontControll
                             implode(' / ', $payment_method_ids);
                         $order_payments[0]->card_holder = implode(' / ', $card_holder_names);
                     }
-                    $order_payments[0]->save();
+                    //$order_payments[0]->save();
+
+                    UtilMercadoPago::logMensagem(
+                        'MercadoPagoStandardReturnModuleFrontController::initContent = '.
+                        '$uri = '. $uri,
+                        MPApi::ERROR
+                    );
 
                     Tools::redirectLink($uri);
                 }
