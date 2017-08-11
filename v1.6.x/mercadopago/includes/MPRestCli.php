@@ -90,8 +90,8 @@ class MPRestCli
             );
 
         if (Configuration::get('MERCADOPAGO_LOG') == 'true') {
-            UtilMercadoPago::logMensagem('MercadoPago.exec :: data = '.Tools::jsonEncode($data), MPApi::INFO);
-            UtilMercadoPago::logMensagem('MercadoPago.exec :: response = '.$api_result, MPApi::INFO);
+            UtilMercadoPago::logMensagem('MercadoPago.execTracking :: data = '.Tools::jsonEncode($data), MPApi::INFO);
+            UtilMercadoPago::logMensagem('MercadoPago.execTracking :: response = '.$api_result, MPApi::INFO);
         }
 
         if ($response['status'] == 0) {
@@ -147,7 +147,7 @@ class MPRestCli
 
         if (Configuration::get('MERCADOPAGO_LOG') == 'true') {
             UtilMercadoPago::logMensagem('MercadoPago.exec :: data = '.Tools::jsonEncode($data), MPApi::INFO);
-            UtilMercadoPago::logMensagem('MercadoPago.exec :: response = '.$api_result, MPApi::INFO);
+            UtilMercadoPago::logMensagem('MercadoPago.exec :: response = '.Tools::jsonEncode($response), MPApi::INFO);
         }
 
         if ($response['status'] == 0) {
