@@ -2587,12 +2587,11 @@ class MercadoPago extends PaymentModule
                     $displayName = $this->setNamePaymentType($payment_type);
                     $existOrderMercadoPago = $this->selectMercadoPagoOrder($id_cart);
 
-                    if ($cart->OrderExists() == false &&
-                        ! $existOrderMercadoPago
-                        ) {
+                    if ($cart->OrderExists() == false && !$existOrderMercadoPago) {
+
                         $this->insertMercadoPagoOrder($id_cart, 0, 0, $payment_status);
                         error_log("======VALIDAR validateOrder======");
-                        $this->validateOrder(
+                        $validate_order = $this->validateOrder(
                             $id_cart,
                             Configuration::get($order_status),
                             $total,
@@ -2603,16 +2602,20 @@ class MercadoPago extends PaymentModule
                             false,
                             $customer->secure_key
                         );
-                        $this->insertMercadoPagoOrder($id_cart, $this->currentOrder, 1, $payment_status);
-                        error_log("===currentOrder====".$this->currentOrder);
 
-                        $order = new Order((int)$this->currentOrder);
-                        /*$payments = $order->getOrderPaymentCollection();
-                        $payments[0]->transaction_id = 1234;
-                        $payments[0]->update();*/
+                        if ($validate_order) {
+                            $this->insertMercadoPagoOrder($id_cart, $this->currentOrder, 1, $payment_status);
 
-                        if (Configuration::get('MERCADOPAGO_LOG') == 'true') {
-                            UtilMercadoPago::logMensagem('MercadoPago::updateOrder()::$currentOrder: '. $order->id, 1);
+                            error_log("===currentOrder====".$this->currentOrder);
+
+                            $order = new Order((int)$this->currentOrder);
+                            /*$payments = $order->getOrderPaymentCollection();
+                            $payments[0]->transaction_id = 1234;
+                            $payments[0]->update();*/
+
+                            if (Configuration::get('MERCADOPAGO_LOG') == 'true') {
+                                UtilMercadoPago::logMensagem('MercadoPago::updateOrder()::$currentOrder: '. $order->id, 1);
+                            }
                         }
 
                     }
