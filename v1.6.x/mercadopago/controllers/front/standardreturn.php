@@ -92,6 +92,7 @@ class MercadoPagoStandardReturnModuleFrontController extends ModuleFrontControll
                     $total = (double) number_format($transaction_amounts, 2, '.', '');
                 }
                 $extra_vars = array(
+                    'transaction_id' => Tools::getValue('collection_id'),
                     '{bankwire_owner}' => $mercadopago->textshowemail,
                     '{bankwire_details}' => '',
                     '{bankwire_address}' => '',
@@ -128,25 +129,46 @@ class MercadoPagoStandardReturnModuleFrontController extends ModuleFrontControll
                     $order_id = $mercadopago->getOrderByCartId($cart->id);
                     $existOrderMercadoPago = $mercadopago->selectMercadoPagoOrder($id_cart);
 
-                    if ($cart->OrderExists() == false &&
-                        ! $existOrderMercadoPago
-                        ) {
-                        $displayName = $mercadopago->setNamePaymentType($payment_types[0]);
-                        $mercadopago->validateOrder(
-                            $cart->id,
-                            Configuration::get($order_status),
-                            $total,
-                            $displayName,
-                            null,
-                            $extra_vars,
-                            $cart->id_currency,
-                            false,
-                            $cart->secure_key
-                        );
+                    if ($cart->OrderExists() == false && !$existOrderMercadoPago) {
+
+                        $mercadopago->insertMercadoPagoOrder($id_cart, 0, 0, $payment_status);
+
+                        try {
+
+                            $displayName = $mercadopago->setNamePaymentType($payment_types[0]);
+                            $customer = new Customer($cart->id_customer);
+                            $validate_order = $mercadopago->validateOrder(
+                                $cart->id,
+                                Configuration::get($order_status),
+                                $total,
+                                $displayName,
+                                null,
+                                $extra_vars,
+                                $cart->id_currency,
+                                false,
+                                $customer->secure_key
+                            );
+
+                            UtilMercadoPago::logMensagem(
+                                'MercadoPago::StandardReturn - validateOrder = '. $validate_order . ', $mercadopago->currentOrder = ' . $mercadopago->currentOrder,
+                                MPApi::INFO
+                            );
+
+                            if ($validate_order) {
+                                $mercadopago->insertMercadoPagoOrder($id_cart, $mercadopago->currentOrder, 1, $payment_status);
+                            }
+
+                        } catch(Exception $e) {
+                            UtilMercadoPago::logMensagem(
+                                'MercadoPago::StandardReturn::validateOrder - Exception: '.
+                                $e->getMessage(),
+                                MPApi::ERROR
+                            );
+
+                        }
                     }
 
-                    $order_id = !$mercadopago->currentOrder ?
-                    Order::getOrderByCartId($cart->id) : $mercadopago->currentOrder;
+                    $order_id = $mercadopago->currentOrder > 0 ? $mercadopago->currentOrder : Order::getOrderByCartId($cart->id);
                     $order = new Order($order_id);
 
                     $uri = __PS_BASE_URI__.'order-confirmation.php?id_cart='.$order->id_cart.'&id_module='.
@@ -157,11 +179,14 @@ class MercadoPagoStandardReturnModuleFrontController extends ModuleFrontControll
                     $uri .= '&payment_type='.implode(' / ', $payment_types);
                     $uri .= '&payment_method_id='.implode(' / ', $payment_method_ids);
                     $uri .= '&amount='.$total;
+
                     $order_payments = $order->getOrderPayments();
                     if ($order_payments == null || $order_payments[0] == null) {
                         $order_payments[0] = new stdClass();
                     }
+
                     $order_payments[0]->transaction_id = Tools::getValue('collection_id');
+
                     if ($payment_info['payment_type'] == 'credit_card' ||
                         $payment_info['payment_type'] == 'account_money') {
                         $uri .= '&card_holder_name='.implode(' / ', $card_holder_names);
