@@ -2309,9 +2309,6 @@ class MercadoPago extends PaymentModule
         if ($checkout == 'standard' && $topic == 'merchant_order' && $id > 0) {
             $result = $this->mercadopago->getMerchantOrder($id);
             $merchant_order_info = $result['response'];
-            // check value
-            $cart = new Cart($merchant_order_info['external_reference']);
-
             $payments = $merchant_order_info['payments'];
             $external_reference = $merchant_order_info['external_reference'];
             foreach ($payments as $payment) {
@@ -2335,6 +2332,7 @@ class MercadoPago extends PaymentModule
             if ($merchant_order_info['total_amount'] == $transaction_amounts) {
                 if (Configuration::get('MERCADOPAGO_COUNTRY') == 'MCO' ||
                     Configuration::get('MERCADOPAGO_COUNTRY') == 'MLC') {
+                    $cart = new Cart($merchant_order_info['external_reference']);
                     $transaction_amounts = $cart->getOrderTotal(true, Cart::BOTH);
                 }
                 if ($isMercadoEnvios ||
@@ -2360,7 +2358,6 @@ class MercadoPago extends PaymentModule
             }
             // check the module
             $id_order = $this->getOrderByCartId($merchant_order_info['external_reference']);
-            $order = new Order($id_order);
             $status_shipment = null;
             if (isset($merchant_order_info['shipments'][0]) &&
                 $merchant_order_info['shipments'][0]['shipping_mode'] == 'me2' &&
@@ -2388,14 +2385,81 @@ class MercadoPago extends PaymentModule
                         break;
                 }
                 if ($order_status != null) {
-                    $existStates = $this->checkStateExist($id_order, Configuration::get($order_status));
+                    $existStates = self::checkStateExist($id_order, Configuration::get($order_status));
                     if ($existStates) {
                         error_log('MercadoPago :: listenIPN - existStates == ' .$status_shipment);
                         return;
                     }
-                    $this->updateOrderHistory($order->id, Configuration::get($order_status));
+                    $this->updateOrderHistory($id_order, Configuration::get($order_status));
                 }
             }
+        }  elseif ($checkout == 'standard' && $topic == 'payment' && $id > 0) { 
+
+            $result = $this->mercadopago->getPayment($id);
+            if (!isset($result['error'])) {
+
+                $payment_info = $result['response'];
+                $external_reference = $payment_info['external_reference'];
+
+                $id_order = $this->getOrderByCartId($external_reference);
+                UtilMercadoPago::logMensagem('MercadoPago::listenIPN()::Payment id_order: '.$id_order, $id);  
+                
+                // Como es un pago "payment" chequeo que ya existe el pedido si no no hago nada.
+                if ($id_order > 0) {
+                    
+                    // colect payment details
+                    $payment_ids[] = $payment_info['id'];
+                    $payment_statuses[] = $payment_info['status'];
+                    $payment_types[] = $payment_info['payment_type_id'];
+                    $transaction_amounts += $payment_info['transaction_amount'];
+                    if ($payment_info['payment_type_id'] == 'credit_card') {
+                        $payment_method_ids[] = $payment_info['payment_method_id'];
+                        $credit_cards[] = '**** **** **** '.$payment_info['card']['last_four_digits'];
+                        $cardholders[] = $payment_info['card']['cardholder']['name'];
+                    }
+
+                    $order_status = array(
+                        'in_process' => 'MERCADOPAGO_STATUS_0',
+                        'approved' => 'MERCADOPAGO_STATUS_1',
+                        'cancelled' => 'MERCADOPAGO_STATUS_2',
+                        'rejected' => 'MERCADOPAGO_STATUS_3',
+                        'refunded' => 'MERCADOPAGO_STATUS_4',
+                        'charged_back' => 'MERCADOPAGO_STATUS_5',
+                        'in_mediation' => 'MERCADOPAGO_STATUS_6',
+                        'pending' => 'MERCADOPAGO_STATUS_7',
+                        'ready_to_ship' => 'MERCADOPAGO_STATUS_8',
+                        'shipped' => 'MERCADOPAGO_STATUS_9',
+                        'delivered' => 'MERCADOPAGO_STATUS_10'
+                    );
+
+                    $new_order_status = $order_status[$payment_statuses[0]];
+                    $new_id_order_status = Configuration::get($new_order_status);
+
+                    // Entro solo si el pedido no tiene el estado nuevo. Si ya lo tiene no hago nada.
+                    // Esto es para evitar doble pago completado, pendiente, etc.
+                    if (!self::existsStatusInOrder($new_id_order_status, $id_order)) {
+
+                        UtilMercadoPago::logMensagem('MercadoPago::listenIPN()::Payment id_order: '.$id_order.' ingresó con el estado: "' . $payment_statuses[0].'"', $id);               
+                    
+                        $this->updateOrder(
+                            $payment_ids,
+                            $payment_statuses,
+                            $payment_method_ids,
+                            $payment_types,
+                            $credit_cards,
+                            $cardholders,
+                            $transaction_amounts,
+                            $external_reference,
+                            $result,
+                            $checkout
+                        );
+
+                    } else {                        
+                        UtilMercadoPago::logMensagem('MercadoPago::listenIPN()::Payment id_order: '.$id_order.' ya existe el estado: "' . $payment_statuses[0] . '"', $id);
+                    }
+                }
+            }
+
         } elseif (($checkout == 'custom' || $checkout == 'pos') && $topic == 'payment' && $id > 0) {
             $result = $this->mercadopago->getPayment($id);
             $payment_info = $result['response'];
@@ -2430,6 +2494,16 @@ class MercadoPago extends PaymentModule
         }
     }
 
+    public static function existsStatusInOrder($id_order_state, $id_order) {
+        $count = Db::getInstance()->getValue(
+            'SELECT count(`id_order_state`) FROM '._DB_PREFIX_.'order_history
+            WHERE `id_order` = '.(int) $id_order.'
+            AND `id_order_state` = '. (int) $id_order_state
+        );
+
+        return $count > 0;
+    }
+
     /**
      * Verify if there is state approved for order.
      */
@@ -2450,7 +2524,7 @@ class MercadoPago extends PaymentModule
      */
     public static function checkStateExist($id_order, $id_order_state)
     {
-        return (bool) Db::getInstance()->getValue(
+        $id_order_state = Db::getInstance()->getValue(
             '
         SELECT `id_order_state`
         FROM '._DB_PREFIX_.'order_history
@@ -2458,6 +2532,8 @@ class MercadoPago extends PaymentModule
         AND `id_order_state` = '.
             (int) $id_order_state
         );
+
+        return $id_order_state > 0;
     }
 
     private function updateOrder(
@@ -2540,25 +2616,29 @@ class MercadoPago extends PaymentModule
             if ($order_status) {
                 $id_cart = $external_reference;
                 $id_order = $this->getOrderByCartId($id_cart);
-                if ($id_order) {
+                if (is_numeric($id_order) && $id_order > 0) {
                     $order = new Order($id_order);
 
-                    $existStates = $this->checkStateExist(
+                    $existStates = self::checkStateExist(
                         $id_order,
                         Configuration::get($order_status)
                     );
                     if ($existStates) {
+                        
+                        if (Configuration::get('MERCADOPAGO_LOG') == 'true') {
+                            UtilMercadoPago::logMensagem('MercadoPago::updateOrder() - Ya existe el estado '.$payment_status.' en el pedido ' . $id_order, 1);
+                        }
                         return;
                     }
                 }
                 // If order wasn't created yet and payment is approved or pending or in_process, create it.
                 // This can happen when user closes checkout standard
-                if (empty($id_order) && ($payment_status == 'in_process' || $payment_status == 'approved' ||
+                if ($id_order == false && ($payment_status == 'in_process' || $payment_status == 'approved' ||
                     $payment_status == 'pending')
                     ) {
 
                     if (Configuration::get('MERCADOPAGO_LOG') == 'true') {
-                        UtilMercadoPago::logMensagem('MercadoPago::updateOrder()::empty($id_order) && payment_status = ('.$payment_status.')', 1);
+                        UtilMercadoPago::logMensagem('MercadoPago::updateOrder()::$id_order == false && payment_status = ('.$payment_status.')', 1);
                     }
 
                     $cart = new Cart($id_cart);
@@ -2569,10 +2649,10 @@ class MercadoPago extends PaymentModule
                         '{bankwire_details}' => '',
                         '{bankwire_address}' => '',
                     );
-                    $id_order = !$id_order ? $this->getOrderByCartId($id_cart) : $id_order;
+                    /*$id_order = !$id_order ? $this->getOrderByCartId($id_cart) : $id_order;
                     error_log("====id_order====".$id_order);
                     $order = new Order($id_order);
-                    $existStates = $this->checkStateExist($id_order, Configuration::get($order_status));
+                    $existStates = self::checkStateExist($id_order, Configuration::get($order_status));
 
                     if (Configuration::get('MERCADOPAGO_LOG') == 'true') {
                         UtilMercadoPago::logMensagem('MercadoPago::updateOrder()::checkStateExist($id_order, '.Configuration::get($order_status).') = ' . $existStates, 1);
@@ -2580,17 +2660,16 @@ class MercadoPago extends PaymentModule
 
                     if ($existStates) {
                         return;
-                    }
+                    }*/
 
                     $displayName = $this->setNamePaymentType($payment_type);
                     $existOrderMercadoPago = $this->selectMercadoPagoOrder($id_cart);
 
-                    if ($cart->OrderExists() == false &&
-                        ! $existOrderMercadoPago
-                        ) {
+                    if ($cart->OrderExists() == false && !$existOrderMercadoPago) {
+
                         $this->insertMercadoPagoOrder($id_cart, 0, 0, $payment_status);
                         error_log("======VALIDAR validateOrder======");
-                        $this->validateOrder(
+                        $validate_order = $this->validateOrder(
                             $id_cart,
                             Configuration::get($order_status),
                             $total,
@@ -2601,18 +2680,32 @@ class MercadoPago extends PaymentModule
                             false,
                             $customer->secure_key
                         );
-                        $this->insertMercadoPagoOrder($id_cart, $this->currentOrder, 1, $payment_status);
-                        error_log("===currentOrder====".$this->currentOrder);
 
-                        $order = new Order((int)$this->currentOrder);
-                        $payments = $order->getOrderPaymentCollection();
-                        $payments[0]->transaction_id = 1234;
-                        $payments[0]->update();
+                        if ($validate_order) {
+                            $this->insertMercadoPagoOrder($id_cart, $this->currentOrder, 1, $payment_status);
+
+                            error_log("===currentOrder====".$this->currentOrder);
+
+                            $order = new Order((int)$this->currentOrder);
+                            /*$payments = $order->getOrderPaymentCollection();
+                            $payments[0]->transaction_id = 1234;
+                            $payments[0]->update();*/
+
+                            if (Configuration::get('MERCADOPAGO_LOG') == 'true') {
+                                UtilMercadoPago::logMensagem('MercadoPago::updateOrder()::$currentOrder: '. $order->id, 1);
+                            }
+                        }
+
                     }
-                } elseif (!empty($order) && $order->current_state != null &&
+                } elseif ($order != null && $order->current_state != null &&
                      $order->current_state != Configuration::get($order_status)) {
-                    $id_order = !$id_order ? $this->getOrderByCartId($id_cart) : $id_order;
-                    $order = new Order($id_order);
+                        
+                    if (Configuration::get('MERCADOPAGO_LOG') == 'true') {
+                        UtilMercadoPago::logMensagem('MercadoPago::updateOrder()::$id_order == '.$order->id.' && current_state = '.$order->current_state.' && order_status = ' . Configuration::get($order_status), 1);
+                    }
+
+                    //$id_order = !$id_order ? $this->getOrderByCartId($id_cart) : $id_order;
+                    //$order = new Order($id_order);
                     /*
                      * this is necessary to ignore the transactions with the same
                      * external reference and states diferents
@@ -2713,10 +2806,10 @@ class MercadoPago extends PaymentModule
             UtilMercadoPago::logMensagem('MercadoPago::updateOrderHistory()::id_order: '. $id_order . ', $status: '. $status . ', $mail: ' . $mail, 1);
         }
 
-        $existStates = $this->checkStateExist($id_order, $status);
+        $existStates = self::checkStateExist($id_order, $status);
 
         if (Configuration::get('MERCADOPAGO_LOG') == 'true') {
-            UtilMercadoPago::logMensagem('MercadoPago::updateOrderHistory()::checkStateExist('. $id_order . ', '. $status . ') = ' . $existStates, 1);
+            UtilMercadoPago::logMensagem('MercadoPago::updateOrderHistory()::checkStateExist('. $id_order . ', '. $status . ') = ' . ($existStates ? 'true' : 'false'), 1);
         }
 
         if ($existStates) {
