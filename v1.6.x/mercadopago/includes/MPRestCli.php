@@ -91,7 +91,7 @@ class MPRestCli
 
         if (Configuration::get('MERCADOPAGO_LOG') == 'true') {
             UtilMercadoPago::logMensagem('MercadoPago.execTracking :: data = '.Tools::jsonEncode($data), MPApi::INFO);
-            UtilMercadoPago::logMensagem('MercadoPago.execTracking :: response = '.$api_result, MPApi::INFO);
+            UtilMercadoPago::logMensagem('MercadoPago.execTracking :: response = '.Tools::jsonEncode($response), MPApi::INFO);
         }
 
         if ($response['status'] == 0) {
