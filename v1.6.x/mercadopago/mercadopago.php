@@ -89,7 +89,7 @@ class MercadoPago extends PaymentModule
     {
         $this->name = 'mercadopago';
         $this->tab = 'payments_gateways';
-        $this->version = '3.4.12';
+        $this->version = '3.4.13';
         $this->currencies = true;
         //$this->currencies_mode = 'radio';
         $this->need_instance = 0;
@@ -121,7 +121,6 @@ class MercadoPago extends PaymentModule
         );
 
         $this->currencies_mode = 'checkbox';
-
         //$this->bootstrap = true;
     }
 
@@ -2315,6 +2314,9 @@ class MercadoPago extends PaymentModule
                 // get payment info
                 $result = $this->mercadopago->getPaymentStandard($payment['id']);
                 $payment_info = $result['response']['collection'];
+                
+                UtilMercadoPago::logMensagem('MercadoPago::listenIPN()::payment_info. ID: '.$payment['id'].', $status = '.$payment_info['status'], $id);
+
                 // colect payment details
                 $payment_ids[] = $payment_info['id'];
                 $payment_statuses[] = $payment_info['status'];
@@ -2355,6 +2357,8 @@ class MercadoPago extends PaymentModule
                     $result,
                     $checkout
                 );
+            } else {                
+                UtilMercadoPago::logMensagem('MercadoPago::listenIPN()::transaction_amounts diferentes.: $merchant_order_info["total_amount"]: '.$merchant_order_info['total_amount'] .'!= $transaction_amounts: '.$transaction_amounts, $id);
             }
             // check the module
             $id_order = $this->getOrderByCartId($merchant_order_info['external_reference']);
@@ -2619,11 +2623,7 @@ class MercadoPago extends PaymentModule
                 if (is_numeric($id_order) && $id_order > 0) {
                     $order = new Order($id_order);
 
-                    $existStates = self::checkStateExist(
-                        $id_order,
-                        Configuration::get($order_status)
-                    );
-                    if ($existStates) {
+                    if (self::checkStateExist($id_order, Configuration::get($order_status))) {
                         
                         if (Configuration::get('MERCADOPAGO_LOG') == 'true') {
                             UtilMercadoPago::logMensagem('MercadoPago::updateOrder() - Ya existe el estado '.$payment_status.' en el pedido ' . $id_order, 1);
@@ -2649,18 +2649,6 @@ class MercadoPago extends PaymentModule
                         '{bankwire_details}' => '',
                         '{bankwire_address}' => '',
                     );
-                    /*$id_order = !$id_order ? $this->getOrderByCartId($id_cart) : $id_order;
-                    error_log("====id_order====".$id_order);
-                    $order = new Order($id_order);
-                    $existStates = self::checkStateExist($id_order, Configuration::get($order_status));
-
-                    if (Configuration::get('MERCADOPAGO_LOG') == 'true') {
-                        UtilMercadoPago::logMensagem('MercadoPago::updateOrder()::checkStateExist($id_order, '.Configuration::get($order_status).') = ' . $existStates, 1);
-                    }
-
-                    if ($existStates) {
-                        return;
-                    }*/
 
                     $displayName = $this->setNamePaymentType($payment_type);
                     $existOrderMercadoPago = $this->selectMercadoPagoOrder($id_cart);
